@@ -93,6 +93,13 @@ class HeatingWindowEdgeTime(HeatingScheduleRoomEntity, TimeEntity):
         self._attr_entity_registry_enabled_default = window_idx == 0
 
     @property
+    def suggested_object_id(self) -> str | None:
+        # The symbolic "▶1"/"◼1" translations slugify to just "1" and collide
+        # within a room. Anchor on the slot index + edge so new rooms get
+        # time.<slug>_window_<n>_<start|end>, independent of label.
+        return f"window_{self._window_idx + 1}_{self._edge}"
+
+    @property
     def _windows_entity_id(self) -> str:
         return f"text.{self._slug}_windows"
 

@@ -78,6 +78,13 @@ class HeatingComfortNumber(HeatingScheduleRoomEntity, NumberEntity, RestoreEntit
         self._attr_unique_id = f"{entry.entry_id}_{slug}_comfort"
         self._attr_native_value = _clamp(initial_value)
 
+    @property
+    def suggested_object_id(self) -> str | None:
+        # HA prepends the device name for has_entity_name entities, so just
+        # return the suffix. Result: number.<slug>_comfort regardless of how
+        # the "Comfort" translation gets rendered.
+        return "comfort"
+
     async def async_added_to_hass(self) -> None:
         await super().async_added_to_hass()
         last = await self.async_get_last_state()
@@ -119,6 +126,15 @@ class HeatingWindowCountNumber(HeatingScheduleRoomEntity, NumberEntity):
     ) -> None:
         super().__init__(entry, slug, room_name)
         self._attr_unique_id = f"{entry.entry_id}_{slug}_window_count"
+
+    @property
+    def suggested_object_id(self) -> str | None:
+        # Pre-existing rooms have number.<slug>_number_of_heating_windows
+        # (slugified from the original "Number of heating windows" name);
+        # those entity IDs are sticky in the registry. For new rooms this
+        # makes the ID number.<slug>_window_count, decoupled from whatever
+        # the translated label looks like.
+        return "window_count"
 
     @property
     def _windows_entity_id(self) -> str:

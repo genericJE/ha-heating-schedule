@@ -83,6 +83,13 @@ class HeatingWindowsText(HeatingScheduleRoomEntity, TextEntity, RestoreEntity):
         # card + time entities keep reading/writing its JSON.
         self._attr_device_info = None
 
+    @property
+    def suggested_object_id(self) -> str | None:
+        # Without a device, HA would otherwise derive the entity_id from the
+        # translated name ("Windows" → text.windows, collides across rooms).
+        # Anchor it on the room slug so each room gets text.<slug>_windows.
+        return f"{self._slug}_windows"
+
     async def async_added_to_hass(self) -> None:
         """Restore last known value or fall back to the configured default."""
         await super().async_added_to_hass()
