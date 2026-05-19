@@ -427,7 +427,13 @@ class _PauseSync:
             return
         new = event.data.get("new_state")
         old = event.data.get("old_state")
-        if not new or not old or new.state == old.state or new.state not in ("on", "off"):
+        if (
+            not new
+            or not old
+            or new.state == old.state
+            or new.state not in ("on", "off")
+            or old.state not in ("on", "off")
+        ):
             return
         if not self.hass.states.get(EXTERNAL_PAUSE_BOOLEAN):
             return
@@ -440,7 +446,13 @@ class _PauseSync:
             return
         new = event.data.get("new_state")
         old = event.data.get("old_state")
-        if not new or not old or new.state == old.state or new.state not in ("on", "off"):
+        if (
+            not new
+            or not old
+            or new.state == old.state
+            or new.state not in ("on", "off")
+            or old.state not in ("on", "off")
+        ):
             return
         if not self._switch_entity or not self.hass.states.get(self._switch_entity):
             return
