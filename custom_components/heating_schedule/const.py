@@ -12,6 +12,11 @@ PLATFORMS = [Platform.NUMBER, Platform.SWITCH, Platform.TEXT, Platform.TIME]
 # YAML snippet emitted at the end of the config flow.
 PAUSE_UNIQUE_SUFFIX = "pause"
 
+# Stable suffix for the hub-level setback number entity. The full entity_id
+# is number.heating_schedule_setback (built from suggested_object_id in
+# number.py), and the controller resolves it via the registry on start.
+SETBACK_UNIQUE_SUFFIX = "setback"
+
 # Hard-coded peer for the bidirectional pause mirror. If your install uses
 # a different input_boolean to gate pause-related YAML automations, change
 # this to its entity_id.

@@ -41,24 +41,51 @@
   },
   "entity": {
     "text": {
-      "windows": { "name": "Παράθυρα" }
+      "windows": {
+        "name": "Παράθυρα"
+      }
     },
     "number": {
-      "comfort": { "name": "Άνεση" },
-      "window_count": { "name": "Παράθυρα" }
+      "comfort": {
+        "name": "Άνεση"
+      },
+      "window_count": {
+        "name": "Παράθυρα"
+      },
+      "setback": {
+        "name": "Υποχώρηση"
+      }
     },
     "switch": {
-      "pause": { "name": "Παύση" }
+      "pause": {
+        "name": "Παύση"
+      }
     },
     "time": {
-      "window_1_start": { "name": "▶1" },
-      "window_1_end":   { "name": "◼1" },
-      "window_2_start": { "name": "▶2" },
-      "window_2_end":   { "name": "◼2" },
-      "window_3_start": { "name": "▶3" },
-      "window_3_end":   { "name": "◼3" },
-      "window_4_start": { "name": "▶4" },
-      "window_4_end":   { "name": "◼4" }
+      "window_1_start": {
+        "name": "▶1"
+      },
+      "window_1_end": {
+        "name": "◼1"
+      },
+      "window_2_start": {
+        "name": "▶2"
+      },
+      "window_2_end": {
+        "name": "◼2"
+      },
+      "window_3_start": {
+        "name": "▶3"
+      },
+      "window_3_end": {
+        "name": "◼3"
+      },
+      "window_4_start": {
+        "name": "▶4"
+      },
+      "window_4_end": {
+        "name": "◼4"
+      }
     }
   }
 }

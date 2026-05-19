@@ -41,24 +41,51 @@
   },
   "entity": {
     "text": {
-      "windows": { "name": "Vensters" }
+      "windows": {
+        "name": "Vensters"
+      }
     },
     "number": {
-      "comfort": { "name": "Comfort" },
-      "window_count": { "name": "Vensters" }
+      "comfort": {
+        "name": "Comfort"
+      },
+      "window_count": {
+        "name": "Vensters"
+      },
+      "setback": {
+        "name": "Terugval"
+      }
     },
     "switch": {
-      "pause": { "name": "Pauze" }
+      "pause": {
+        "name": "Pauze"
+      }
     },
     "time": {
-      "window_1_start": { "name": "▶1" },
-      "window_1_end":   { "name": "◼1" },
-      "window_2_start": { "name": "▶2" },
-      "window_2_end":   { "name": "◼2" },
-      "window_3_start": { "name": "▶3" },
-      "window_3_end":   { "name": "◼3" },
-      "window_4_start": { "name": "▶4" },
-      "window_4_end":   { "name": "◼4" }
+      "window_1_start": {
+        "name": "▶1"
+      },
+      "window_1_end": {
+        "name": "◼1"
+      },
+      "window_2_start": {
+        "name": "▶2"
+      },
+      "window_2_end": {
+        "name": "◼2"
+      },
+      "window_3_start": {
+        "name": "▶3"
+      },
+      "window_3_end": {
+        "name": "◼3"
+      },
+      "window_4_start": {
+        "name": "▶4"
+      },
+      "window_4_end": {
+        "name": "◼4"
+      }
     }
   }
 }

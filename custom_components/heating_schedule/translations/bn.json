@@ -41,24 +41,51 @@
   },
   "entity": {
     "text": {
-      "windows": { "name": "উইন্ডোজ" }
+      "windows": {
+        "name": "উইন্ডোজ"
+      }
     },
     "number": {
-      "comfort": { "name": "আরাম" },
-      "window_count": { "name": "উইন্ডোজ" }
+      "comfort": {
+        "name": "আরাম"
+      },
+      "window_count": {
+        "name": "উইন্ডোজ"
+      },
+      "setback": {
+        "name": "সেটব্যাক"
+      }
     },
     "switch": {
-      "pause": { "name": "বিরতি" }
+      "pause": {
+        "name": "বিরতি"
+      }
     },
     "time": {
-      "window_1_start": { "name": "▶1" },
-      "window_1_end":   { "name": "◼1" },
-      "window_2_start": { "name": "▶2" },
-      "window_2_end":   { "name": "◼2" },
-      "window_3_start": { "name": "▶3" },
-      "window_3_end":   { "name": "◼3" },
-      "window_4_start": { "name": "▶4" },
-      "window_4_end":   { "name": "◼4" }
+      "window_1_start": {
+        "name": "▶1"
+      },
+      "window_1_end": {
+        "name": "◼1"
+      },
+      "window_2_start": {
+        "name": "▶2"
+      },
+      "window_2_end": {
+        "name": "◼2"
+      },
+      "window_3_start": {
+        "name": "▶3"
+      },
+      "window_3_end": {
+        "name": "◼3"
+      },
+      "window_4_start": {
+        "name": "▶4"
+      },
+      "window_4_end": {
+        "name": "◼4"
+      }
     }
   }
 }

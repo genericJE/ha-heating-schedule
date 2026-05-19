@@ -64,6 +64,9 @@
       },
       "window_count": {
         "name": "Windows"
+      },
+      "setback": {
+        "name": "Setback"
       }
     },
     "switch": {

@@ -41,24 +41,51 @@
   },
   "entity": {
     "text": {
-      "windows": { "name": "Fenêtres" }
+      "windows": {
+        "name": "Fenêtres"
+      }
     },
     "number": {
-      "comfort": { "name": "Confort" },
-      "window_count": { "name": "Fenêtres" }
+      "comfort": {
+        "name": "Confort"
+      },
+      "window_count": {
+        "name": "Fenêtres"
+      },
+      "setback": {
+        "name": "Repli"
+      }
     },
     "switch": {
-      "pause": { "name": "Pause" }
+      "pause": {
+        "name": "Pause"
+      }
     },
     "time": {
-      "window_1_start": { "name": "▶1" },
-      "window_1_end":   { "name": "◼1" },
-      "window_2_start": { "name": "▶2" },
-      "window_2_end":   { "name": "◼2" },
-      "window_3_start": { "name": "▶3" },
-      "window_3_end":   { "name": "◼3" },
-      "window_4_start": { "name": "▶4" },
-      "window_4_end":   { "name": "◼4" }
+      "window_1_start": {
+        "name": "▶1"
+      },
+      "window_1_end": {
+        "name": "◼1"
+      },
+      "window_2_start": {
+        "name": "▶2"
+      },
+      "window_2_end": {
+        "name": "◼2"
+      },
+      "window_3_start": {
+        "name": "▶3"
+      },
+      "window_3_end": {
+        "name": "◼3"
+      },
+      "window_4_start": {
+        "name": "▶4"
+      },
+      "window_4_end": {
+        "name": "◼4"
+      }
     }
   }
 }

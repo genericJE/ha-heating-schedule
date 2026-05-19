@@ -18,14 +18,17 @@ from .const import (
     CONF_COMFORT_DEFAULT,
     CONF_NAME,
     CONF_ROOMS,
+    CONF_SETBACK,
     CONF_SLUG,
     DEFAULT_COMFORT,
     DEFAULT_COMFORT_MAX,
     DEFAULT_COMFORT_MIN,
     DEFAULT_COMFORT_STEP,
+    DEFAULT_SETBACK,
     MAX_WINDOWS,
+    SETBACK_UNIQUE_SUFFIX,
 )
-from .entity import HeatingScheduleRoomEntity
+from .entity import HeatingScheduleRoomEntity, hub_device_info
 
 if TYPE_CHECKING:
     from . import HeatingScheduleConfigEntry
@@ -36,8 +39,14 @@ async def async_setup_entry(
     entry: HeatingScheduleConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
-    """Set up the comfort + window-count number entities for each room."""
-    entities: list[NumberEntity] = []
+    """Set up the comfort + window-count number entities for each room,
+    plus the hub-level setback temperature."""
+    entities: list[NumberEntity] = [
+        HeatingSetbackNumber(
+            entry,
+            initial_value=float(entry.data.get(CONF_SETBACK, DEFAULT_SETBACK)),
+        )
+    ]
     for room in entry.data.get(CONF_ROOMS, []):
         slug = room[CONF_SLUG]
         room_name = room[CONF_NAME]
@@ -172,6 +181,56 @@ class HeatingWindowCountNumber(HeatingScheduleRoomEntity, NumberEntity):
             {"entity_id": self._windows_entity_id, "value": json.dumps(new)},
             blocking=False,
         )
+
+
+class HeatingSetbackNumber(NumberEntity, RestoreEntity):
+    """Setback temperature applied outside any heating window.
+
+    Hub-scoped (one per config entry). Initial value is seeded from the
+    wizard's setback step; state is restored across restarts. The schedule
+    controller reads its state on every evaluation, so adjusting it from
+    a dashboard tile or automation takes effect on the next tick (and
+    immediately via a state-change subscription).
+    """
+
+    _attr_has_entity_name = True
+    _attr_should_poll = False
+    _attr_translation_key = "setback"
+    _attr_native_min_value = DEFAULT_COMFORT_MIN
+    _attr_native_max_value = DEFAULT_COMFORT_MAX
+    _attr_native_step = DEFAULT_COMFORT_STEP
+    _attr_native_unit_of_measurement = UnitOfTemperature.CELSIUS
+    _attr_mode = NumberMode.BOX
+    _attr_icon = "mdi:thermometer-low"
+    _attr_entity_category = EntityCategory.CONFIG
+
+    def __init__(
+        self,
+        entry: HeatingScheduleConfigEntry,
+        initial_value: float,
+    ) -> None:
+        super().__init__()
+        self._attr_unique_id = f"{entry.entry_id}_{SETBACK_UNIQUE_SUFFIX}"
+        self._attr_native_value = _clamp(initial_value)
+        self._attr_device_info = hub_device_info(entry)
+
+    @property
+    def suggested_object_id(self) -> str | None:
+        # Yields number.heating_schedule_setback regardless of translation.
+        return f"heating_schedule_{SETBACK_UNIQUE_SUFFIX}"
+
+    async def async_added_to_hass(self) -> None:
+        await super().async_added_to_hass()
+        last = await self.async_get_last_state()
+        if last and not is_unusable(last.state):
+            with contextlib.suppress(TypeError, ValueError):
+                self._attr_native_value = _clamp(float(last.state))
+
+    async def async_set_native_value(self, value: float) -> None:
+        clamped = _clamp(value)
+        if clamped != self._attr_native_value:
+            self._attr_native_value = clamped
+            self.async_write_ha_state()
 
 
 def _clamp(value: float) -> float:

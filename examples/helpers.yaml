@@ -32,7 +32,8 @@ input_number:
   # Per-room comfort temperature. The window slider card's +/− spinner writes
   # these; the Apply heating schedule automation pushes the value to
   # climate.<room>_heating while at least one window is active, and drops to
-  # 14 °C (Frostschutz) otherwise.
+  # the configured setback (number.heating_schedule_setback, fallback 14 °C)
+  # otherwise.
   heating_comfort_kitchen:
     name: Kitchen comfort temperature
     min: 5

@@ -43,6 +43,7 @@ from .const import (
     PAUSE_SETTLE_SECONDS,
     PAUSE_SNAPSHOT_DELAY_SECONDS,
     PAUSE_UNIQUE_SUFFIX,
+    SETBACK_UNIQUE_SUFFIX,
 )
 
 if TYPE_CHECKING:
@@ -83,7 +84,7 @@ class HeatingScheduleController:
         # against the platform forward and yield empty results.
         self._rooms: list[_Room] = []
         self._pause_entity: str | None = None
-        self._setback: float = float(entry.data.get(CONF_SETBACK, DEFAULT_SETBACK))
+        self._setback_entity: str | None = None
         self._pause_sync = _PauseSync(hass)
 
     def _resolve_pause_switch(self) -> str | None:
@@ -91,6 +92,13 @@ class HeatingScheduleController:
         registry = er.async_get(self.hass)
         return registry.async_get_entity_id(
             "switch", DOMAIN, f"{self.entry.entry_id}_{PAUSE_UNIQUE_SUFFIX}"
+        )
+
+    def _resolve_setback_number(self) -> str | None:
+        """Look up the integration's setback number entity via the registry."""
+        registry = er.async_get(self.hass)
+        return registry.async_get_entity_id(
+            "number", DOMAIN, f"{self.entry.entry_id}_{SETBACK_UNIQUE_SUFFIX}"
         )
 
     def _resolve_rooms(self) -> list[_Room]:
@@ -130,6 +138,7 @@ class HeatingScheduleController:
         """Wire up triggers and run an initial evaluation."""
         self._rooms = self._resolve_rooms()
         self._pause_entity = self._resolve_pause_switch()
+        self._setback_entity = self._resolve_setback_number()
 
         watched_per_room = [
             entity
@@ -146,6 +155,13 @@ class HeatingScheduleController:
             self._unsub_callbacks.append(
                 async_track_state_change_event(
                     self.hass, [self._pause_entity], self._on_pause_change
+                )
+            )
+
+        if self._setback_entity:
+            self._unsub_callbacks.append(
+                async_track_state_change_event(
+                    self.hass, [self._setback_entity], self._on_setback_change
                 )
             )
 
@@ -258,6 +274,12 @@ class HeatingScheduleController:
                     )
 
     @callback
+    def _on_setback_change(self, _event: Event[EventStateChangedData]) -> None:
+        # Re-evaluate every room so the new setback takes effect now rather
+        # than waiting for the next per-minute tick.
+        self.hass.async_create_task(self._evaluate_all())
+
+    @callback
     def _on_pause_change(self, event: Event[EventStateChangedData]) -> None:
         old = event.data.get("old_state")
         new = event.data.get("new_state")
@@ -306,8 +328,9 @@ class HeatingScheduleController:
         guard as the normal evaluation path so rooms already at setback
         stay quiet.
         """
+        setback = self._read_setback()
         await asyncio.gather(
-            *(self._write_climate(room, self._setback) for room in self._rooms)
+            *(self._write_climate(room, setback) for room in self._rooms)
         )
 
     async def _write_climate(self, room: _Room, desired: float) -> None:
@@ -355,7 +378,7 @@ class HeatingScheduleController:
         now = dt_util.now()
         minute = now.hour * 60 + now.minute
         active = any(_in_window(s, e, minute) for s, e in windows)
-        desired = comfort if active else self._setback
+        desired = comfort if active else self._read_setback()
         await self._write_climate(room, desired)
 
     # ── helpers ───────────────────────────────────────────────────────────
@@ -365,6 +388,23 @@ class HeatingScheduleController:
             return False
         state = self.hass.states.get(self._pause_entity)
         return state is not None and state.state == STATE_ON
+
+    def _read_setback(self) -> float:
+        """Read the current setback from the hub number entity.
+
+        Falls back to the wizard-stored value (and then DEFAULT_SETBACK) if
+        the entity hasn't been resolved yet or its state is unavailable —
+        which only happens during the brief window between platform forward
+        and async_start, or if a user has manually removed the entity.
+        """
+        if self._setback_entity:
+            state = self.hass.states.get(self._setback_entity)
+            if state is not None and not is_unusable(state.state):
+                try:
+                    return float(state.state)
+                except (TypeError, ValueError):
+                    pass
+        return float(self.entry.data.get(CONF_SETBACK, DEFAULT_SETBACK))
 
     def _read_number(self, entity_id: str, fallback: float) -> float:
         state = self.hass.states.get(entity_id)

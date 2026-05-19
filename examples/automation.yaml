@@ -3,9 +3,10 @@
   description: 'Per-room heating schedule. For each room, reads its window list from
     input_text.heating_windows_<room> (JSON: [["HH:MM","HH:MM"], ...]). When the current
     time is inside any window, climate.<room>_heating target is set to input_number.heating_comfort_<room>;
-    otherwise it drops to 14°C (Frostschutz). The last window in the list may wrap
-    midnight (end < start). heating_paused overrides — Apply Heating Pause already
-    drives all rooms to 14°C during a pause, so this automation no-ops. Triggers:
+    otherwise it drops to the configured setback (number.heating_schedule_setback,
+    fallback 14°C). The last window in the list may wrap midnight (end < start).
+    heating_paused overrides — Apply Heating Pause already drives all rooms to
+    setback during a pause, so this automation no-ops. Triggers:
     every minute (time_pattern) as the safety net for arbitrary window edges; state
     changes on the per-room input_text + input_number.heating_comfort_* (instant re-eval
     on slider drag or spinner click); heating_paused off-transition (5 s delay so
@@ -40,13 +41,16 @@
     from: 'on'
     to: 'off'
     id: all
+  - trigger: state
+    entity_id: number.heating_schedule_setback
+    id: all
   - trigger: homeassistant
     event: start
     id: all
   conditions: []
   actions:
   - variables:
-      setback: 14
+      setback: "{{ states('number.heating_schedule_setback') | float(14) }}"
       rooms:
       - kitchen
       - bedroom

@@ -1,8 +1,8 @@
 # Heating Window Slider Card for Home Assistant
 
-<img src="docs/logo.svg" alt="" width="96" align="right">
+<img src="docs/logo.svg" alt="Heating Schedule logo: a radiator with rising heat squiggles, above a slider with two handles" width="96" align="right">
 
-> **Personal project** — built for a specific Vaillant + Better Thermostat installation. The card and automation only depend on a `climate` entity that accepts `set_temperature`, so they work with any climate integration; the rest of the install is generic HA. Released as-is.
+> **Personal project** — built for a specific Better Thermostat installation. The card and automation only depend on a `climate` entity that accepts `set_temperature`, so they work with any climate integration; the rest of the install is generic HA. Released as-is.
 
 [![HACS](https://img.shields.io/badge/HACS-Custom-orange.svg)](https://hacs.xyz)
 
@@ -12,12 +12,12 @@ A per-room heating schedule for Home Assistant. Each room gets a card with a 24-
 
 ## What it gives you
 
-- **1–4 windows per room** on a single 24h track. Window count is configuration only — set by the length of the JSON list in the helper (or its `initial:` default in `helpers.yaml`). To add or remove a window: edit the `input_text` helper value.
-- **Dual-handle range slider per window**. Drag start and end; cyclic neighbour constraint prevents handles from passing one another (equal values are allowed for smooth touching).
-- **Wrap-around for the last window**: if its end is earlier than its start (e.g. `22:00 → 07:00`), it renders as two fills (start→24:00 and 00:00→end). Wrap is reachable through ordinary drags — no special toggle.
-- **Per-room comfort temperature** via a `+/–` spinner. The room heats to this value whenever any window is active.
-- **Setback outside all windows**: 14 °C (Vaillant Frostschutz), hard-coded in the automation. Change it to taste.
-- **Active / inactive badge** — whether the current time falls inside any window for that room.
+- **1–4 heating windows per room** on a single 24h track. Heating window count is configuration only — set by the length of the JSON list in the helper (or its `initial:` default in `helpers.yaml`). To add or remove a heating window: edit the `input_text` helper value.
+- **Dual-handle range slider per heating window**. Drag start and end; cyclic neighbour constraint prevents handles from passing one another (equal values are allowed for smooth touching).
+- **Wrap-around for the last heating window**: if its end is earlier than its start (e.g. `22:00 → 07:00`), it renders as two fills (start→24:00 and 00:00→end). Wrap is reachable through ordinary drags — no special toggle.
+- **Per-room comfort temperature** via a `+/–` spinner. The room heats to this value whenever any heating window is active.
+- **Setback outside all heating windows**: configurable via `number.heating_schedule_setback` (initial value set in the wizard, default 14 °C). Adjust from a dashboard tile or read the value from external automations.
+- **Active / inactive badge** — whether the current time falls inside any heating window for that room.
 - **Current room temperature** in the subtitle, from a sensor you wire up.
 - **Window open/closed icon** mirroring the colour theme of HA's tile cards (cyan when open).
 - **`heating_paused` aware** — yields to the existing pause/resume flow with a 5 s delay so the schedule re-asserts after the snapshot restore, not against it.
@@ -30,38 +30,26 @@ A per-room heating schedule for Home Assistant. Each room gets a card with a 24-
 
 ## Installation
 
-Pick **one** path. The integration is the hands-off route; the YAML path is what existed before and still works.
-
-### A. Via the integration (recommended)
-
-This installs the card *and* provisions everything else — per-room window storage, comfort target, the schedule controller — through a normal HA config flow.
+This installs the card *and* provisions everything else — per-room heating window storage, comfort target, the schedule controller — through a normal HA config flow.
 
 1. **HACS** → ⋮ → *Custom repositories* → add this repo's URL, type **Integration**, install *Heating Schedule*. Restart HA.
-2. **Settings → Devices & Services → Add Integration → "Heating Schedule"**. The wizard asks for the number of rooms, then per room: name + climate entity (+ optional current-temperature sensor and window binary sensor) + comfort temperature + initial windows. The last step shows a pasteable Lovelace YAML snippet for a sections view.
+2. **Settings → Devices & Services → Add Integration → "Heating Schedule"**. The wizard asks for the number of rooms, then per room: name + climate entity (+ optional current-temperature sensor and window binary sensor) + comfort temperature + initial heating windows. The last step shows a pasteable Lovelace YAML snippet for a sections view.
 3. **Settings → Dashboards → Resources → Add resource** → URL `/heating_schedule/heating-window-slider-card.js`, type *JavaScript module*. (One-time. The integration serves the card from its own static path.)
 4. Paste the YAML snippet into a sections-style dashboard view.
 
 Per room you get:
 
-- `text.<slug>_windows` — JSON window list, written by the card slider.
+- `text.<slug>_windows` — JSON heating window list, written by the card slider.
 - `number.<slug>_comfort` — comfort target, written by the card spinner.
 
 (`<slug>` is the room name slugified — `Living Room` → `living_room`.)
 
-You also get a single `switch.heating_schedule_pause` (see [Pause](#pause) below).
+You also get two hub-level entities:
 
-The schedule controller runs inside the integration: per-minute tick + state-change listeners on the per-room text/number entities + `homeassistant.start` + the pause switch's off-transition (with a 5 s settle). It writes `set_temperature` to your climate entity when in-window and the configured setback otherwise, with an idempotent guard so unchanged targets stay quiet.
+- `switch.heating_schedule_pause` — pause the schedule (see [Pause](#pause) below).
+- `number.heating_schedule_setback` — temperature applied outside any heating window. Seeded from the wizard's setback step; adjustable from a dashboard tile or service call. The controller re-evaluates immediately on change. External automations can read it as `{{ states('number.heating_schedule_setback') | float }}`.
 
-### B. Manual YAML install (the original path)
-
-If you'd rather wire the helpers and the automation up by hand — useful if you already have a YAML-only install and don't want to migrate — the original path is unchanged:
-
-1. **Card**: copy [`custom_components/heating_schedule/www/heating-window-slider-card.js`](custom_components/heating_schedule/www/heating-window-slider-card.js) into `<config>/www/`, then *Settings → Dashboards → Resources → Add resource* with URL `/local/heating-window-slider-card.js`, type *JavaScript module*.
-2. **Helpers**: merge [`examples/helpers.yaml`](examples/helpers.yaml) into `configuration.yaml`, then call `input_text.reload` and `input_number.reload`.
-3. **Automation**: copy [`examples/automation.yaml`](examples/automation.yaml) into `automations.yaml` (adapting the room slugs if they differ from `kitchen` / `bedroom` / `bathroom` / `living_room`), then call `automation.reload`.
-4. **Dashboard**: add the cards from [`examples/dashboard.yaml`](examples/dashboard.yaml) to a sections view, pointing each card's entities at your installation.
-
-The card auto-detects the entity domain (`input_text` vs `text`, `input_number` vs `number`) and calls the matching `set_value` service, so the same card binary works for both paths.
+The schedule controller runs inside the integration: per-minute tick + state-change listeners on the per-room text/number entities + `homeassistant.start` + the pause switch's off-transition (with a 5 s settle). It writes `set_temperature` to your climate entity when inside a heating window and the configured setback otherwise, with an idempotent guard so unchanged targets stay quiet.
 
 ## Card config reference
 
@@ -80,19 +68,20 @@ step_minutes: 5                            # optional, slider snap (default 5)
 
 The automation runs every minute (`time_pattern: '/1'`) and also fires on:
 
-- state change of any `input_text.heating_windows_<room>` (slider drag, add/remove window)
+- state change of any `input_text.heating_windows_<room>` (slider drag, add/remove heating window)
 - state change of any `input_number.heating_comfort_<room>` (spinner click)
+- state change of `number.heating_schedule_setback` (so setback edits take effect immediately)
 - `input_boolean.heating_paused` off→on transitions (with a 5 s settle delay)
 - `homeassistant.start`
 
-For each room it parses the JSON window list and checks whether **any** window contains the current time. The window-membership math (with wrap):
+For each room it parses the JSON heating window list and checks whether **any** heating window contains the current time. The heating-window membership math (with wrap):
 
 ```
 in_window = (s < e  and s ≤ n < e)
          or (s > e  and (n ≥ s or n < e))
 ```
 
-If yes → write `comfort_<room>` to the climate target. If no → write `14 °C` (setback).
+If yes → write `comfort_<room>` to the climate target. If no → write the current setback (`number.heating_schedule_setback`, default 14 °C).
 
 Each write is guarded by `current_target ≠ desired`, so re-evaluations that match are no-ops and the TRV doesn't churn.
 
@@ -100,8 +89,8 @@ Each write is guarded by `current_target ≠ desired`, so re-evaluations that ma
 
 - Each handle is clamped between its **cyclic neighbours** on the 24h circle (immediate prev / next handle clockwise).
 - **Equal values are allowed** — two handles can touch but not pass.
-- After every drag the schedule is **canonicalised** (sorted by start). If a drag causes a window to "wrap", the window ends up last in the list with `end < start`, and the slider renders both fill segments automatically. There's no separate wrap mode toggle.
-- **Window count is configuration only.** The card has no `+` / `−` UI; the number of windows is the JSON array length in the `input_text` helper (1 to 4). To add or remove a window, edit the helper (Developer Tools → States, or call `input_text.set_value`).
+- After every drag the schedule is **canonicalised** (sorted by start). If a drag causes a heating window to "wrap", the heating window ends up last in the list with `end < start`, and the slider renders both fill segments automatically. There's no separate wrap mode toggle.
+- **Heating window count is configuration only.** The card has no `+` / `−` UI; the number of heating windows is the JSON array length in the `input_text` helper (1 to 4). To add or remove a heating window, edit the helper (Developer Tools → States, or call `input_text.set_value`).
 
 ## Pause
 
@@ -111,7 +100,7 @@ While pause is on, each room's slider card renders in gray with a "disabled" bad
 
 ### `input_boolean.heating_paused` as an entry point
 
-If you have an `input_boolean.heating_paused` helper, the integration mirrors it bidirectionally with `switch.heating_schedule_pause`. Flipping either side propagates to the other (a context-id guard breaks the feedback loop). That keeps the boolean as a stable entry point for buttons and automations to pause the schedule.
+If you add an `input_boolean.heating_paused` helper, the integration mirrors it bidirectionally with `switch.heating_schedule_pause`. Flipping either side propagates to the other (a context-id guard breaks the feedback loop). That keeps the boolean as a stable entry point for buttons and automations to pause the schedule.
 
 Example: if you take a vacation for a week and want to pause the heating schedule, add a "Vacation heating toggle" button to your dashboard:
 
@@ -163,7 +152,7 @@ Things that won't work the way you might expect.
 4. **The schedule silently skips climates in `hvac_mode: off`.** A user-disabled climate is treated as authoritative; the integration won't bring it out of off. Set it back to `heat` (or your platform's equivalent) for the schedule to apply.
 5. **The schedule yields to Better Thermostat's window-open frost protect.** When a climate reports `attributes.window_open: true`, the integration skips its writes for that room and lets the underlying platform hold its frost target. Comfort writes resume automatically once the window closes.
 6. **Don't rename `input_boolean.heating_paused`.** The integration's mirror is hardcoded to that exact entity_id (`EXTERNAL_PAUSE_BOOLEAN` in `custom_components/heating_schedule/const.py`). Rename it and the sync silently breaks; edit the constant to match if you need a different name.
-7. **The integration's setback survives in `number.<room>_comfort`, not in a snapshot.** The setback temperature is per-config-entry (set in the wizard, default `14 °C`); the comfort target is per-room and editable from the card spinner. If you change a room's comfort while paused, the new value is what wins on resume — there's no "remember the comfort I had before the pause."
+7. **The integration's setback survives in `number.<room>_comfort`, not in a snapshot.** The setback temperature is hub-scoped (`number.heating_schedule_setback`, seeded from the wizard, default `14 °C`); the comfort target is per-room and editable from the card spinner. If you change a room's comfort while paused, the new value is what wins on resume — there's no "remember the comfort I had before the pause."
 
 **Tl;dr**: anything you want preserved across a pause goes in a scene snapshot; anything you want changed by the pause goes in the integration's own state; everything else stays out of the climate entities while pause is on.
 
@@ -183,10 +172,10 @@ When upgrading from YAML to the integration: the integration's sync layer means 
 ## Customisation
 
 - **Comfort temperature**: per-room `input_number`. Adjust via the spinner or directly in the helper.
-- **Setback temperature**: hard-coded as `14` in the automation's `variables.setback`. Change it there.
+- **Setback temperature**: `number.heating_schedule_setback`. Adjust via a dashboard tile, a service call, or `number.set_value` from any automation.
 - **Slider step**: pass `step_minutes: 15` (or other) on the card to coarsen the granularity. Default is 5.
 - **Comfort defaults per room**: in `helpers.yaml`, the `initial:` keys set the value used the first time a helper loads.
-- **Default windows**: also via `initial:` in `helpers.yaml`. The card and automation will follow.
+- **Default heating windows**: also via `initial:` in `helpers.yaml`. The card and automation will follow.
 
 ## Not in scope
 
@@ -197,3 +186,5 @@ When upgrading from YAML to the integration: the integration's sync layer means 
 ## License
 
 MIT
+
+If anything here ends up being useful to you and you feel like saying thanks, my PayPal is https://paypal.me/genericJE. Truly no expectation either way, just leaving the option here in case.
