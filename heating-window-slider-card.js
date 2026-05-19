@@ -10,7 +10,10 @@
  *
  * Storage: a single input_text per room holding a JSON list of
  * [["HH:MM","HH:MM"], ...] window pairs. The last entry may wrap midnight
- * (end < start).
+ * (end < start). The number of windows is determined by the JSON array
+ * length — it's a setup decision, not a runtime UI control. To add or
+ * remove a window: edit the helper's value (Developer Tools → States, or
+ * call input_text.set_value).
  *
  * Config:
  *   type: custom:heating-window-slider-card
@@ -35,7 +38,6 @@
 
 const CARD_TAG = 'heating-window-slider-card';
 const DEFAULT_STEP = 5;
-const MIN_WINDOWS = 1;
 const MAX_WINDOWS = 4;
 const DAY = 1440;
 
@@ -62,15 +64,16 @@ const css = `
     width: 36px;
     height: 36px;
     border-radius: 50%;
-    background: rgba(255,152,0,0.15);
+    /* Idle: yellow/active radiator. */
+    background: rgba(255,152,0,0.18);
     color: var(--state-active-color, #ff9800);
-    opacity: 0.6;
-    transition: background 0.15s, color 0.15s, opacity 0.15s;
+    opacity: 1;
+    transition: background 0.15s, color 0.15s;
   }
   .climate-icon.heating {
-    background: rgba(255,111,34,0.32);
-    color: #ff6f22;
-    opacity: 1;
+    /* Heating: blue radiator-disabled. */
+    background: rgba(33,150,243,0.22);
+    color: var(--state-climate-cool-color, #2196f3);
   }
   .name-block {
     flex: 1;
@@ -160,32 +163,6 @@ const css = `
     color: var(--primary-text-color);
     user-select: none;
   }
-  .windows-bar {
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    gap: 6px;
-    color: var(--secondary-text-color);
-    font-size: 0.78rem;
-    font-variant-numeric: tabular-nums;
-    user-select: none;
-  }
-  .windows-bar .count { padding: 0 6px; }
-  .windows-bar button {
-    width: 24px;
-    height: 24px;
-    border-radius: 50%;
-    border: 0;
-    background: var(--secondary-background-color, rgba(127,127,127,0.15));
-    color: var(--primary-text-color);
-    font-size: 1rem;
-    line-height: 24px;
-    padding: 0;
-    cursor: pointer;
-    font-family: inherit;
-  }
-  .windows-bar button:hover:not(:disabled) { background: rgba(127,127,127,0.28); }
-  .windows-bar button:disabled { opacity: 0.4; cursor: not-allowed; }
   .slider-wrap {
     position: relative;
     height: 42px;
@@ -371,11 +348,6 @@ class HeatingWindowSliderCard extends HTMLElement {
           <button class="inc" type="button" aria-label="Increase">+</button>
         </div>
       </div>
-      <div class="windows-bar">
-        <span class="count">1 window</span>
-        <button class="btn-remove" type="button" aria-label="Remove last window">−</button>
-        <button class="btn-add" type="button" aria-label="Add window">+</button>
-      </div>
       <div class="slider-wrap">
         <div class="track"></div>
         <div class="fills"></div>
@@ -403,9 +375,6 @@ class HeatingWindowSliderCard extends HTMLElement {
       btnInc: card.querySelector('.inc'),
       btnDec: card.querySelector('.dec'),
       spinVal: card.querySelector('.value'),
-      countLabel: card.querySelector('.windows-bar .count'),
-      btnAdd: card.querySelector('.btn-add'),
-      btnRemove: card.querySelector('.btn-remove'),
       wrap: card.querySelector('.slider-wrap'),
       fills: card.querySelector('.fills'),
       handles: card.querySelector('.handles'),
@@ -414,8 +383,6 @@ class HeatingWindowSliderCard extends HTMLElement {
 
     this._els.btnInc.addEventListener('click', () => this._adjustComfort(+1));
     this._els.btnDec.addEventListener('click', () => this._adjustComfort(-1));
-    this._els.btnAdd.addEventListener('click', () => this._addWindow());
-    this._els.btnRemove.addEventListener('click', () => this._removeLastWindow());
 
     if (this.isConnected && 'ResizeObserver' in window && !this._resizeObs) {
       this._resizeObs = new ResizeObserver(() => this._safeUpdate());
@@ -499,44 +466,6 @@ class HeatingWindowSliderCard extends HTMLElement {
     const dPrev = Math.min(cwDist(prev, value), cwDist(value, prev));
     const dNext = Math.min(cwDist(next, value), cwDist(value, next));
     return dPrev <= dNext ? prev : next;
-  }
-
-  // ── + / − buttons ─────────────────────────────────────────────────────
-
-  _addWindow() {
-    const windows = this._readWindows();
-    if (windows.length >= MAX_WINDOWS) return;
-    const step = this._config.step_minutes || DEFAULT_STEP;
-    let best = { size: 0, gapStart: 0 };
-    if (windows.length === 0) {
-      best = { size: DAY, gapStart: 0 };
-    } else {
-      // Walk windows in canonical order; the gap is from one window's end
-      // to the next window's start, going clockwise (wraps for the last pair).
-      const sorted = this._canonicalise(windows);
-      for (let i = 0; i < sorted.length; i++) {
-        const w = sorted[i];
-        const nextW = sorted[(i + 1) % sorted.length];
-        const size = ((nextW.start - w.end + DAY) % DAY) || DAY;
-        if (size > best.size) best = { size, gapStart: w.end };
-      }
-    }
-    // New window spans the middle 50% of the largest gap, but >= 30 min wide.
-    let width = Math.max(30, Math.round(best.size / 2 / step) * step);
-    width = Math.min(width, best.size - step);
-    if (width < step) width = step;
-    const startOffset = Math.round((best.size - width) / 2 / step) * step;
-    let start = (best.gapStart + startOffset) % DAY;
-    let end = (start + width) % DAY;
-    const next = this._canonicalise([...windows, { start, end }]);
-    this._writeWindows(next);
-  }
-
-  _removeLastWindow() {
-    const windows = this._readWindows();
-    if (windows.length <= MIN_WINDOWS) return;
-    const next = windows.slice(0, -1);
-    this._writeWindows(next);
   }
 
   // ── Drag handlers ─────────────────────────────────────────────────────
@@ -665,6 +594,7 @@ class HeatingWindowSliderCard extends HTMLElement {
     this._els.subtitle.style.display = subtitleParts.length ? '' : 'none';
 
     const heating = climate?.attributes?.hvac_action === 'heating';
+    this._els.climateIcon.icon = heating ? 'mdi:radiator-disabled' : 'mdi:radiator';
     this._els.climateIcon.classList.toggle('heating', !!heating);
 
     this._els.badge.textContent = anyActive ? 'active' : 'inactive';
@@ -690,10 +620,6 @@ class HeatingWindowSliderCard extends HTMLElement {
     this._els.btnDec.disabled = !comfortState || !(comfort > min + 1e-6);
     this._els.btnInc.disabled = !comfortState || !(comfort < max - 1e-6);
     this._els.spinner.style.display = this._config.comfort_entity ? '' : 'none';
-
-    this._els.countLabel.textContent = `${windows.length} window${windows.length === 1 ? '' : 's'}`;
-    this._els.btnAdd.disabled = windows.length >= MAX_WINDOWS;
-    this._els.btnRemove.disabled = windows.length <= MIN_WINDOWS;
 
     this._renderWindows(windows);
     this._updateNowMark();

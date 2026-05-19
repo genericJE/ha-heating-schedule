@@ -1,6 +1,6 @@
 # Heating Window Slider Card for Home Assistant
 
-> **Personal project** — built for a specific Vaillant + Better Thermostat setup. Released as-is; works for me, may need adapting for your installation.
+> **Personal project** — built for a specific Vaillant + Better Thermostat installation. The card and automation only depend on a `climate` entity that accepts `set_temperature`, so they work with any climate integration; the rest of the install is generic HA. Released as-is.
 
 [![HACS](https://img.shields.io/badge/HACS-Custom-orange.svg)](https://hacs.xyz)
 
@@ -10,7 +10,7 @@ A per-room heating schedule for Home Assistant. Each room gets a card with a 24-
 
 ## What it gives you
 
-- **1–4 windows per room** on a single 24h track. Add / remove via `+` and `−` buttons.
+- **1–4 windows per room** on a single 24h track. Window count is configuration only — set by the length of the JSON list in the helper (or its `initial:` default in `helpers.yaml`). To add or remove a window: edit the `input_text` helper value.
 - **Dual-handle range slider per window**. Drag start and end; cyclic neighbour constraint prevents handles from passing one another (equal values are allowed for smooth touching).
 - **Wrap-around for the last window**: if its end is earlier than its start (e.g. `22:00 → 07:00`), it renders as two fills (start→24:00 and 00:00→end). Wrap is reachable through ordinary drags — no special toggle.
 - **Per-room comfort temperature** via a `+/–` spinner. The room heats to this value whenever any window is active.
@@ -23,7 +23,7 @@ A per-room heating schedule for Home Assistant. Each room gets a card with a 24-
 ## Requirements
 
 - Home Assistant 2024.x or later (the card uses `ha-icon` and the automation uses the modern `triggers:` / `actions:` keys, plus the `from_json` filter).
-- One `climate` entity per room. Tested with [Better Thermostat](https://github.com/KartoffelToby/better_thermostat) wrapping Zigbee TRVs.
+- One `climate` entity per room that accepts `set_temperature` — any climate integration works (Better Thermostat, generic_thermostat, MQTT HVAC, native Zigbee TRV climates, etc.). I happen to use [Better Thermostat](https://github.com/KartoffelToby/better_thermostat) over Zigbee TRVs, which is why the install notes occasionally reference it.
 - Optional but recommended: per-room temperature sensor and window-opening binary sensor.
 
 ## Installation
@@ -32,8 +32,8 @@ A per-room heating schedule for Home Assistant. Each room gets a card with a 24-
 
 **HACS (custom repository)**
 
-1. HACS → Frontend → ⋮ → Custom repositories
-2. Add this repo's URL, category `Lovelace`
+1. HACS → ⋮ → Custom repositories
+2. Add this repo's URL, type **Dashboard**
 3. Install *Heating Window Slider Card*
 4. Reload your browser
 
@@ -104,8 +104,7 @@ Each write is guarded by `current_target ≠ desired`, so re-evaluations that ma
 - Each handle is clamped between its **cyclic neighbours** on the 24h circle (immediate prev / next handle clockwise).
 - **Equal values are allowed** — two handles can touch but not pass.
 - After every drag the schedule is **canonicalised** (sorted by start). If a drag causes a window to "wrap", the window ends up last in the list with `end < start`, and the slider renders both fill segments automatically. There's no separate wrap mode toggle.
-- The `+` button finds the largest gap **between adjacent windows** and inserts a new window in the middle of it.
-- The `−` button removes the latest (last-started) window. Min 1, max 4.
+- **Window count is configuration only.** The card has no `+` / `−` UI; the number of windows is the JSON array length in the `input_text` helper (1 to 4). To add or remove a window, edit the helper (Developer Tools → States, or call `input_text.set_value`).
 
 ## Integration with `heating_paused` / `Resume Heating`
 
@@ -130,9 +129,13 @@ If a user manually un-pauses (without Resume firing, e.g. by tapping the Pause b
 
 ## Not in scope
 
-- Open-window detection — Better Thermostat handles that locally if you've enabled it. The card just surfaces window state for awareness.
+- Open-window detection — your climate integration may handle that locally (Better Thermostat does). The card just surfaces window state for awareness.
 - HVAC mode switching (heat / off / auto). The automation writes only `set_temperature`; mode stays where you put it.
 - Holidays, geo fencing, presence-aware adjustments. Hook these into the existing pause flow rather than the schedule.
+
+## Future: HA integration with a config flow
+
+The current install path is YAML helpers + automation + dashboard. A future option is to package the whole thing as a proper HA custom integration with a config flow modal that walks the user through rooms / entities / comfort temps, then auto-creates the helpers, the automation, and (optionally) the dashboard cards. That would make setup a single click. Not in this repo yet.
 
 ## License
 
