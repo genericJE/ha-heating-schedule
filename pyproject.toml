@@ -1,0 +1,51 @@
+[project]
+name = "ha-heating-schedule"
+version = "0.1.0"
+description = "Per-room heating schedule integration and card for Home Assistant"
+license = "MIT"
+license-files = ["LICENSE"]
+requires-python = ">=3.13,<3.14"
+dependencies = [
+    "homeassistant>=2024.4.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["custom_components/heating_schedule"]
+
+[tool.uv]
+dev-dependencies = [
+    "pyright>=1.1.400",
+    "ruff>=0.11",
+    "pytest-homeassistant-custom-component>=0.13",
+]
+
+[tool.ruff]
+line-length = 100
+extend-exclude = ["examples"]
+
+[tool.ruff.lint]
+select = ["ALL"]
+ignore = [
+    "COM812",
+    "D",
+    "ISC001",
+    "FBT",
+    "ANN401",
+    "ARG",
+    "PLR0913",
+    "PLR2004",
+    "TRY003",
+    "EM",
+    "TC",
+    "PLC0415",
+    "BLE001",
+]
+
+[tool.pyright]
+typeCheckingMode = "basic"
+pythonVersion = "3.13"
+include = ["custom_components"]

@@ -1,0 +1,55 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Heating Schedule",
+        "description": "How many rooms do you want to schedule? You can change this later by removing and re-adding the integration.",
+        "data": {
+          "room_count": "Number of rooms"
+        }
+      },
+      "room": {
+        "title": "Room {index} of {total}",
+        "description": "Pick a name and the climate entity for this room. The optional sensor and window entries drive the current-temperature subtitle and the open-window icon on the card.",
+        "data": {
+          "name": "Room name",
+          "climate_entity": "Climate entity (target)",
+          "current_temp_entity": "Current temperature sensor (optional)",
+          "window_entity": "Window open binary sensor (optional)",
+          "comfort_default": "Initial comfort temperature",
+          "windows_default": "Initial windows (JSON, e.g. [[\"07:00\",\"22:00\"]])"
+        }
+      },
+      "globals": {
+        "title": "Setback and pause",
+        "description": "Optionally hook into an existing pause helper, and pick a setback temperature for the hours outside any window.",
+        "data": {
+          "pause_entity": "Pause helper (optional, input_boolean.heating_paused)",
+          "setback": "Setback temperature"
+        }
+      },
+      "summary": {
+        "title": "Add the cards to your dashboard",
+        "description": "Setup is ready. Add the card as a Lovelace resource (Settings → Dashboards → Resources):\n\n- URL `/heating_schedule/heating-window-slider-card.js`\n- Type *JavaScript module*\n\nThen paste this YAML into a sections-style view:\n\n```yaml\n{dashboard_yaml}\n```\n\nClick **Submit** to finish."
+      }
+    },
+    "error": {
+      "name_required": "Please enter a room name."
+    },
+    "abort": {
+      "already_configured": "Heating Schedule is already configured."
+    }
+  },
+  "entity": {
+    "text": {
+      "windows": {
+        "name": "Windows"
+      }
+    },
+    "number": {
+      "comfort": {
+        "name": "Comfort"
+      }
+    }
+  }
+}

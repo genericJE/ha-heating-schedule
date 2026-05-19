@@ -28,43 +28,34 @@ A per-room heating schedule for Home Assistant. Each room gets a card with a 24-
 
 ## Installation
 
-### 1. The card
+Pick **one** path. The integration is the hands-off route; the YAML path is what existed before and still works.
 
-**HACS (custom repository)**
+### A. Via the integration (recommended)
 
-1. HACS → ⋮ → Custom repositories
-2. Add this repo's URL, type **Dashboard**
-3. Install *Heating Window Slider Card*
-4. Reload your browser
+This installs the card *and* provisions everything else — per-room window storage, comfort target, the schedule controller — through a normal HA config flow.
 
-**Manual**
+1. **HACS** → ⋮ → *Custom repositories* → add this repo's URL, type **Integration**, install *Heating Schedule*. Restart HA.
+2. **Settings → Devices & Services → Add Integration → "Heating Schedule"**. The wizard asks for the number of rooms, then per room: name + climate entity (+ optional current-temperature sensor and window binary sensor) + comfort temperature + initial windows. The last step shows a pasteable Lovelace YAML snippet for a sections view.
+3. **Settings → Dashboards → Resources → Add resource** → URL `/heating_schedule/heating-window-slider-card.js`, type *JavaScript module*. (One-time. The integration serves the card from its own static path.)
+4. Paste the YAML snippet into a sections-style dashboard view.
 
-1. Copy `heating-window-slider-card.js` into `<config>/www/`
-2. Settings → Dashboards → Resources → Add resource
-   - URL: `/local/heating-window-slider-card.js`
-   - Type: JavaScript module
+Per room you get:
 
-### 2. Helpers
+- `text.heating_schedule_windows_<slug>` — JSON window list, written by the card slider.
+- `number.heating_schedule_comfort_<slug>` — comfort target, written by the card spinner.
 
-Merge the contents of [`examples/helpers.yaml`](examples/helpers.yaml) into your `configuration.yaml` (or wherever you keep `input_text:` and `input_number:` blocks). Then:
+The schedule controller runs inside the integration (per-minute tick + state-change listeners + HA start + optional `input_boolean.heating_paused` off-transition with a 5 s settle). It writes `set_temperature` to your climate entity when in-window and the configured setback otherwise, with an idempotent guard so unchanged targets stay quiet.
 
-- Developer Tools → Services → `input_text.reload`
-- Developer Tools → Services → `input_number.reload`
+### B. Manual YAML install (the original path)
 
-Each room gets:
+If you'd rather wire the helpers and the automation up by hand — useful if you already have a YAML-only install and don't want to migrate — the original path is unchanged:
 
-- `input_text.heating_windows_<room>` — JSON array of `["HH:MM","HH:MM"]` window pairs. Defaults to one window with sensible day/night times.
-- `input_number.heating_comfort_<room>` — comfort target (5–30 °C, step 0.5). Defaults to 20 °C (21 °C for the bedroom).
+1. **Card**: copy [`custom_components/heating_schedule/www/heating-window-slider-card.js`](custom_components/heating_schedule/www/heating-window-slider-card.js) into `<config>/www/`, then *Settings → Dashboards → Resources → Add resource* with URL `/local/heating-window-slider-card.js`, type *JavaScript module*.
+2. **Helpers**: merge [`examples/helpers.yaml`](examples/helpers.yaml) into `configuration.yaml`, then call `input_text.reload` and `input_number.reload`.
+3. **Automation**: copy [`examples/automation.yaml`](examples/automation.yaml) into `automations.yaml` (adapting the room slugs if they differ from `kitchen` / `bedroom` / `bathroom` / `living_room`), then call `automation.reload`.
+4. **Dashboard**: add the cards from [`examples/dashboard.yaml`](examples/dashboard.yaml) to a sections view, pointing each card's entities at your installation.
 
-### 3. The automation
-
-Copy [`examples/automation.yaml`](examples/automation.yaml) into your `automations.yaml`. The action's `variables.rooms` list and the per-room state triggers hard-code `kitchen`, `bedroom`, `bathroom`, `living_room`. Adapt to your installation's room slugs if they differ.
-
-Then: Developer Tools → Services → `automation.reload`.
-
-### 4. The dashboard
-
-Add the cards from [`examples/dashboard.yaml`](examples/dashboard.yaml) to a sections-style view. Update each card's `entity_id`s to point at your installation.
+The card auto-detects the entity domain (`input_text` vs `text`, `input_number` vs `number`) and calls the matching `set_value` service, so the same card binary works for both paths.
 
 ## Card config reference
 
@@ -132,10 +123,6 @@ If a user manually un-pauses (without Resume firing, e.g. by tapping the Pause b
 - Open-window detection — your climate integration may handle that locally (Better Thermostat does). The card just surfaces window state for awareness.
 - HVAC mode switching (heat / off / auto). The automation writes only `set_temperature`; mode stays where you put it.
 - Holidays, geo fencing, presence-aware adjustments. Hook these into the existing pause flow rather than the schedule.
-
-## Future: HA integration with a config flow
-
-The current install path is YAML helpers + automation + dashboard. A future option is to package the whole thing as a proper HA custom integration with a config flow modal that walks the user through rooms / entities / comfort temps, then auto-creates the helpers, the automation, and (optionally) the dashboard cards. That would make setup a single click. Not in this repo yet.
 
 ## License
 

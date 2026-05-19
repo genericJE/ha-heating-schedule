@@ -254,6 +254,13 @@ const css = `
   }
 `;
 
+// Service domain matches the entity domain: input_text.set_value /
+// text.set_value / input_number.set_value / number.set_value all take the
+// same args, so we just split the entity_id and call the matching domain.
+// Keeps the card working against both the YAML install path (input_*) and
+// the heating_schedule integration's native text/number entities.
+const serviceDomain = (entityId) => (entityId || '').split('.')[0];
+
 const pad2 = (n) => String(n).padStart(2, '0');
 const minToHHMM = (m) => {
   const v = ((Math.round(m) % DAY) + DAY) % DAY;
@@ -418,7 +425,7 @@ class HeatingWindowSliderCard extends HTMLElement {
     const value = JSON.stringify(windows.map(w => [minToHHMM(w.start), minToHHMM(w.end)]));
     this._optimisticWindows = windows;
     this._safeUpdate();
-    this._hass.callService('input_text', 'set_value', { entity_id: eid, value })
+    this._hass.callService(serviceDomain(eid), 'set_value', { entity_id: eid, value })
       .then(() => { this._optimisticWindows = null; })
       .catch(() => { this._optimisticWindows = null; this._safeUpdate(); });
   }
@@ -562,7 +569,7 @@ class HeatingWindowSliderCard extends HTMLElement {
     if (Math.abs(next - cur) < 1e-9) return;
     this._optimisticComfort = next;
     this._safeUpdate();
-    this._hass.callService('input_number', 'set_value', { entity_id: eid, value: next })
+    this._hass.callService(serviceDomain(eid), 'set_value', { entity_id: eid, value: next })
       .then(() => { this._optimisticComfort = null; })
       .catch(() => { this._optimisticComfort = null; this._safeUpdate(); });
   }
@@ -697,9 +704,9 @@ class HeatingWindowSliderCard extends HTMLElement {
 
   static getStubConfig() {
     return {
-      windows_entity: 'input_text.heating_windows_bedroom',
-      comfort_entity: 'input_number.heating_comfort_bedroom',
-      climate_entity: 'climate.bedroom_heating',
+      windows_entity: 'text.heating_schedule_windows_bedroom',
+      comfort_entity: 'number.heating_schedule_comfort_bedroom',
+      climate_entity: 'climate.bedroom',
       current_temp_entity: 'sensor.bedroom_temperature',
       window_entity: 'binary_sensor.bedroom_window',
       name: 'Bedroom',
