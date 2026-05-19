@@ -1,0 +1,64 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Programação de aquecimento",
+        "description": "Para quantos cômodos você quer programar? Você pode alterar isso depois removendo e adicionando a integração novamente.",
+        "data": {
+          "room_count": "Número de cômodos"
+        }
+      },
+      "room": {
+        "title": "Cômodo {index} de {total}",
+        "description": "Escolha um nome e a entidade de clima para este cômodo. Os sensores opcionais e a entrada de janela alimentam o subtítulo de temperatura atual e o ícone de janela aberta no cartão.",
+        "data": {
+          "name": "Nome do cômodo",
+          "climate_entity": "Entidade de clima (alvo)",
+          "current_temp_entity": "Sensor de temperatura atual (opcional)",
+          "window_entity": "Sensor binário de janela aberta (opcional)",
+          "comfort_default": "Temperatura de conforto inicial",
+          "window_count": "Número de janelas de aquecimento"
+        }
+      },
+      "globals": {
+        "title": "Recuo",
+        "description": "Escolha a temperatura para a qual cair fora de qualquer janela. A integração também cria `switch.heating_schedule_pause` — alterne-o (a partir de um tile, uma automação, qualquer lugar) para empurrar cada cômodo para o recuo e parar a programação até você alterná-lo de volta.",
+        "data": {
+          "setback": "Temperatura de recuo"
+        }
+      },
+      "summary": {
+        "title": "Adicione os cartões ao seu painel",
+        "description": "Configuração pronta. Adicione o cartão como um recurso Lovelace (Configurações → Painéis → Recursos):\n\n- URL `/heating_schedule/heating-window-slider-card.js`\n- Tipo *Módulo JavaScript*\n\nEntão cole este YAML em uma visualização estilo sections:\n\n```yaml\n{dashboard_yaml}\n```\n\nClique em **Enviar** para terminar."
+      }
+    },
+    "error": {
+      "name_required": "Por favor, insira um nome para o cômodo."
+    },
+    "abort": {
+      "already_configured": "Programação de aquecimento já está configurada."
+    }
+  },
+  "entity": {
+    "text": {
+      "windows": { "name": "Janelas" }
+    },
+    "number": {
+      "comfort": { "name": "Conforto" },
+      "window_count": { "name": "Janelas" }
+    },
+    "switch": {
+      "pause": { "name": "Pausa" }
+    },
+    "time": {
+      "window_1_start": { "name": "▶1" },
+      "window_1_end":   { "name": "◼1" },
+      "window_2_start": { "name": "▶2" },
+      "window_2_end":   { "name": "◼2" },
+      "window_3_start": { "name": "▶3" },
+      "window_3_end":   { "name": "◼3" },
+      "window_4_start": { "name": "▶4" },
+      "window_4_end":   { "name": "◼4" }
+    }
+  }
+}

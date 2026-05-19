@@ -1,0 +1,64 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "हीटिंग शेड्यूल",
+        "description": "आप कितने कमरों के लिए शेड्यूल सेट करना चाहते हैं? आप बाद में एकीकरण को हटाकर और फिर से जोड़कर इसे बदल सकते हैं।",
+        "data": {
+          "room_count": "कमरों की संख्या"
+        }
+      },
+      "room": {
+        "title": "कमरा {index} में से {total}",
+        "description": "इस कमरे के लिए नाम और क्लाइमेट एंटिटी चुनें। वैकल्पिक सेंसर और विंडो प्रविष्टियाँ कार्ड पर वर्तमान तापमान उपशीर्षक और खिड़की खुली आइकन को संचालित करती हैं।",
+        "data": {
+          "name": "कमरे का नाम",
+          "climate_entity": "क्लाइमेट एंटिटी (लक्ष्य)",
+          "current_temp_entity": "वर्तमान तापमान सेंसर (वैकल्पिक)",
+          "window_entity": "खिड़की खुली बाइनरी सेंसर (वैकल्पिक)",
+          "comfort_default": "प्रारंभिक आरामदायक तापमान",
+          "window_count": "हीटिंग विंडो की संख्या"
+        }
+      },
+      "globals": {
+        "title": "सेटबैक",
+        "description": "किसी भी विंडो के बाहर वापस आने का तापमान चुनें। एकीकरण `switch.heating_schedule_pause` भी बनाता है — इसे टॉगल करें (टाइल, ऑटोमेशन, कहीं से भी) ताकि हर कमरे को सेटबैक पर धकेला जा सके और शेड्यूल को रोका जा सके जब तक आप इसे वापस बंद नहीं करते।",
+        "data": {
+          "setback": "सेटबैक तापमान"
+        }
+      },
+      "summary": {
+        "title": "अपने डैशबोर्ड में कार्ड जोड़ें",
+        "description": "सेटअप तैयार है। कार्ड को Lovelace संसाधन के रूप में जोड़ें (सेटिंग्स → डैशबोर्ड → संसाधन):\n\n- URL `/heating_schedule/heating-window-slider-card.js`\n- प्रकार *JavaScript मॉड्यूल*\n\nफिर इस YAML को sections-style दृश्य में पेस्ट करें:\n\n```yaml\n{dashboard_yaml}\n```\n\nसमाप्त करने के लिए **सबमिट** पर क्लिक करें।"
+      }
+    },
+    "error": {
+      "name_required": "कृपया कमरे का नाम दर्ज करें।"
+    },
+    "abort": {
+      "already_configured": "हीटिंग शेड्यूल पहले से कॉन्फ़िगर है।"
+    }
+  },
+  "entity": {
+    "text": {
+      "windows": { "name": "विंडोज़" }
+    },
+    "number": {
+      "comfort": { "name": "आराम" },
+      "window_count": { "name": "विंडोज़" }
+    },
+    "switch": {
+      "pause": { "name": "रोकें" }
+    },
+    "time": {
+      "window_1_start": { "name": "▶1" },
+      "window_1_end":   { "name": "◼1" },
+      "window_2_start": { "name": "▶2" },
+      "window_2_end":   { "name": "◼2" },
+      "window_3_start": { "name": "▶3" },
+      "window_3_end":   { "name": "◼3" },
+      "window_4_start": { "name": "▶4" },
+      "window_4_end":   { "name": "◼4" }
+    }
+  }
+}

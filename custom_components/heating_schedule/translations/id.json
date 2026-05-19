@@ -1,0 +1,64 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Jadwal pemanas",
+        "description": "Berapa banyak ruangan yang ingin Anda jadwalkan? Anda dapat mengubahnya nanti dengan menghapus dan menambahkan kembali integrasi.",
+        "data": {
+          "room_count": "Jumlah ruangan"
+        }
+      },
+      "room": {
+        "title": "Ruangan {index} dari {total}",
+        "description": "Pilih nama dan entitas iklim untuk ruangan ini. Sensor opsional dan entri jendela mengisi subjudul suhu saat ini dan ikon jendela terbuka pada kartu.",
+        "data": {
+          "name": "Nama ruangan",
+          "climate_entity": "Entitas iklim (target)",
+          "current_temp_entity": "Sensor suhu saat ini (opsional)",
+          "window_entity": "Sensor biner jendela terbuka (opsional)",
+          "comfort_default": "Suhu kenyamanan awal",
+          "window_count": "Jumlah jendela pemanas"
+        }
+      },
+      "globals": {
+        "title": "Kemunduran",
+        "description": "Pilih suhu untuk mundur di luar jendela manapun. Integrasi juga membuat `switch.heating_schedule_pause` — alihkan (dari tile, otomasi, di mana saja) untuk mendorong setiap ruangan ke kemunduran dan menghentikan jadwal hingga Anda mengalihkannya kembali.",
+        "data": {
+          "setback": "Suhu kemunduran"
+        }
+      },
+      "summary": {
+        "title": "Tambahkan kartu ke dasbor Anda",
+        "description": "Pengaturan siap. Tambahkan kartu sebagai sumber daya Lovelace (Pengaturan → Dasbor → Sumber Daya):\n\n- URL `/heating_schedule/heating-window-slider-card.js`\n- Jenis *Modul JavaScript*\n\nLalu tempel YAML ini ke tampilan bergaya sections:\n\n```yaml\n{dashboard_yaml}\n```\n\nKlik **Kirim** untuk selesai."
+      }
+    },
+    "error": {
+      "name_required": "Silakan masukkan nama ruangan."
+    },
+    "abort": {
+      "already_configured": "Jadwal pemanas sudah dikonfigurasi."
+    }
+  },
+  "entity": {
+    "text": {
+      "windows": { "name": "Jendela" }
+    },
+    "number": {
+      "comfort": { "name": "Kenyamanan" },
+      "window_count": { "name": "Jendela" }
+    },
+    "switch": {
+      "pause": { "name": "Jeda" }
+    },
+    "time": {
+      "window_1_start": { "name": "▶1" },
+      "window_1_end":   { "name": "◼1" },
+      "window_2_start": { "name": "▶2" },
+      "window_2_end":   { "name": "◼2" },
+      "window_3_start": { "name": "▶3" },
+      "window_3_end":   { "name": "◼3" },
+      "window_4_start": { "name": "▶4" },
+      "window_4_end":   { "name": "◼4" }
+    }
+  }
+}

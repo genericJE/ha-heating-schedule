@@ -1,0 +1,64 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "جدول التدفئة",
+        "description": "كم عدد الغرف التي تريد جدولتها؟ يمكنك تغيير ذلك لاحقًا عن طريق إزالة التكامل وإعادة إضافته.",
+        "data": {
+          "room_count": "عدد الغرف"
+        }
+      },
+      "room": {
+        "title": "الغرفة {index} من {total}",
+        "description": "اختر اسمًا وكيان المناخ لهذه الغرفة. تعمل المستشعرات الاختيارية وإدخال النافذة على تشغيل العنوان الفرعي لدرجة الحرارة الحالية ورمز فتح النافذة على البطاقة.",
+        "data": {
+          "name": "اسم الغرفة",
+          "climate_entity": "كيان المناخ (الهدف)",
+          "current_temp_entity": "مستشعر درجة الحرارة الحالية (اختياري)",
+          "window_entity": "مستشعر ثنائي للنافذة المفتوحة (اختياري)",
+          "comfort_default": "درجة حرارة الراحة الأولية",
+          "window_count": "عدد نوافذ التدفئة"
+        }
+      },
+      "globals": {
+        "title": "التراجع",
+        "description": "اختر درجة حرارة التراجع خارج أي نافذة. يقوم التكامل أيضًا بإنشاء `switch.heating_schedule_pause` — قم بتبديله (من بلاطة أو أتمتة أو أي مكان) لدفع كل غرفة إلى التراجع وإيقاف الجدول حتى تقوم بتبديله مرة أخرى.",
+        "data": {
+          "setback": "درجة حرارة التراجع"
+        }
+      },
+      "summary": {
+        "title": "أضف البطاقات إلى لوحة التحكم الخاصة بك",
+        "description": "الإعداد جاهز. أضف البطاقة كمورد Lovelace (الإعدادات → لوحات التحكم → الموارد):\n\n- URL `/heating_schedule/heating-window-slider-card.js`\n- النوع *وحدة JavaScript*\n\nثم الصق هذا YAML في عرض بنمط sections:\n\n```yaml\n{dashboard_yaml}\n```\n\nانقر فوق **إرسال** للإنهاء."
+      }
+    },
+    "error": {
+      "name_required": "يرجى إدخال اسم الغرفة."
+    },
+    "abort": {
+      "already_configured": "جدول التدفئة مُهيأ بالفعل."
+    }
+  },
+  "entity": {
+    "text": {
+      "windows": { "name": "النوافذ" }
+    },
+    "number": {
+      "comfort": { "name": "الراحة" },
+      "window_count": { "name": "النوافذ" }
+    },
+    "switch": {
+      "pause": { "name": "إيقاف مؤقت" }
+    },
+    "time": {
+      "window_1_start": { "name": "▶1" },
+      "window_1_end":   { "name": "◼1" },
+      "window_2_start": { "name": "▶2" },
+      "window_2_end":   { "name": "◼2" },
+      "window_3_start": { "name": "▶3" },
+      "window_3_end":   { "name": "◼3" },
+      "window_4_start": { "name": "▶4" },
+      "window_4_end":   { "name": "◼4" }
+    }
+  }
+}

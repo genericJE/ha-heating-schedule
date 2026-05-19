@@ -1,0 +1,64 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Horario de calefacción",
+        "description": "¿Para cuántas habitaciones quieres programar? Puedes cambiarlo más tarde eliminando y volviendo a añadir la integración.",
+        "data": {
+          "room_count": "Número de habitaciones"
+        }
+      },
+      "room": {
+        "title": "Habitación {index} de {total}",
+        "description": "Elige un nombre y la entidad climática para esta habitación. Los sensores opcionales y la entrada de ventana controlan el subtítulo de temperatura actual y el icono de ventana abierta en la tarjeta.",
+        "data": {
+          "name": "Nombre de la habitación",
+          "climate_entity": "Entidad climática (objetivo)",
+          "current_temp_entity": "Sensor de temperatura actual (opcional)",
+          "window_entity": "Sensor binario de ventana abierta (opcional)",
+          "comfort_default": "Temperatura de confort inicial",
+          "window_count": "Número de ventanas de calefacción"
+        }
+      },
+      "globals": {
+        "title": "Retroceso",
+        "description": "Elige la temperatura a la que volver fuera de cualquier ventana. La integración también crea `switch.heating_schedule_pause` — altérnalo (desde un tile, una automatización, donde sea) para llevar cada habitación al retroceso y detener el horario hasta que lo vuelvas a apagar.",
+        "data": {
+          "setback": "Temperatura de retroceso"
+        }
+      },
+      "summary": {
+        "title": "Añade las tarjetas a tu panel",
+        "description": "Configuración lista. Añade la tarjeta como recurso de Lovelace (Configuración → Paneles → Recursos):\n\n- URL `/heating_schedule/heating-window-slider-card.js`\n- Tipo *Módulo JavaScript*\n\nLuego pega este YAML en una vista de estilo sections:\n\n```yaml\n{dashboard_yaml}\n```\n\nHaz clic en **Enviar** para terminar."
+      }
+    },
+    "error": {
+      "name_required": "Por favor, introduce un nombre de habitación."
+    },
+    "abort": {
+      "already_configured": "Horario de calefacción ya está configurado."
+    }
+  },
+  "entity": {
+    "text": {
+      "windows": { "name": "Ventanas" }
+    },
+    "number": {
+      "comfort": { "name": "Confort" },
+      "window_count": { "name": "Ventanas" }
+    },
+    "switch": {
+      "pause": { "name": "Pausa" }
+    },
+    "time": {
+      "window_1_start": { "name": "▶1" },
+      "window_1_end":   { "name": "◼1" },
+      "window_2_start": { "name": "▶2" },
+      "window_2_end":   { "name": "◼2" },
+      "window_3_start": { "name": "▶3" },
+      "window_3_end":   { "name": "◼3" },
+      "window_4_start": { "name": "▶4" },
+      "window_4_end":   { "name": "◼4" }
+    }
+  }
+}

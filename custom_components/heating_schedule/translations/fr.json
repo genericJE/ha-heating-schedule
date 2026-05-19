@@ -1,0 +1,64 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Programme de chauffage",
+        "description": "Pour combien de pièces voulez-vous programmer ? Vous pouvez modifier cela plus tard en supprimant et en réajoutant l'intégration.",
+        "data": {
+          "room_count": "Nombre de pièces"
+        }
+      },
+      "room": {
+        "title": "Pièce {index} sur {total}",
+        "description": "Choisissez un nom et l'entité climatique pour cette pièce. Les capteurs facultatifs et l'entrée de fenêtre alimentent le sous-titre de température actuelle et l'icône d'ouverture de fenêtre sur la carte.",
+        "data": {
+          "name": "Nom de la pièce",
+          "climate_entity": "Entité climatique (cible)",
+          "current_temp_entity": "Capteur de température actuelle (facultatif)",
+          "window_entity": "Capteur binaire d'ouverture de fenêtre (facultatif)",
+          "comfort_default": "Température de confort initiale",
+          "window_count": "Nombre de fenêtres de chauffage"
+        }
+      },
+      "globals": {
+        "title": "Repli",
+        "description": "Choisissez la température de repli hors de toute fenêtre. L'intégration crée également `switch.heating_schedule_pause` — basculez-le (depuis une tuile, une automatisation, n'importe où) pour pousser chaque pièce au repli et arrêter le programme jusqu'à ce que vous le rebasculiez.",
+        "data": {
+          "setback": "Température de repli"
+        }
+      },
+      "summary": {
+        "title": "Ajoutez les cartes à votre tableau de bord",
+        "description": "Configuration prête. Ajoutez la carte comme ressource Lovelace (Paramètres → Tableaux de bord → Ressources) :\n\n- URL `/heating_schedule/heating-window-slider-card.js`\n- Type *Module JavaScript*\n\nPuis collez ce YAML dans une vue de style sections :\n\n```yaml\n{dashboard_yaml}\n```\n\nCliquez sur **Soumettre** pour terminer."
+      }
+    },
+    "error": {
+      "name_required": "Veuillez saisir un nom de pièce."
+    },
+    "abort": {
+      "already_configured": "Programme de chauffage est déjà configuré."
+    }
+  },
+  "entity": {
+    "text": {
+      "windows": { "name": "Fenêtres" }
+    },
+    "number": {
+      "comfort": { "name": "Confort" },
+      "window_count": { "name": "Fenêtres" }
+    },
+    "switch": {
+      "pause": { "name": "Pause" }
+    },
+    "time": {
+      "window_1_start": { "name": "▶1" },
+      "window_1_end":   { "name": "◼1" },
+      "window_2_start": { "name": "▶2" },
+      "window_2_end":   { "name": "◼2" },
+      "window_3_start": { "name": "▶3" },
+      "window_3_end":   { "name": "◼3" },
+      "window_4_start": { "name": "▶4" },
+      "window_4_end":   { "name": "◼4" }
+    }
+  }
+}

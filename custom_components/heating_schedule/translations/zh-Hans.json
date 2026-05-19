@@ -1,0 +1,64 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "供暖时间表",
+        "description": "您要为多少个房间设置时间表？您可以稍后通过移除并重新添加集成来更改此设置。",
+        "data": {
+          "room_count": "房间数量"
+        }
+      },
+      "room": {
+        "title": "房间 {index} / {total}",
+        "description": "为此房间选择名称和气候实体。可选的传感器和窗口条目将驱动卡片上的当前温度副标题和开窗图标。",
+        "data": {
+          "name": "房间名称",
+          "climate_entity": "气候实体（目标）",
+          "current_temp_entity": "当前温度传感器（可选）",
+          "window_entity": "开窗二元传感器（可选）",
+          "comfort_default": "初始舒适温度",
+          "window_count": "供暖时段数量"
+        }
+      },
+      "globals": {
+        "title": "回退",
+        "description": "选择在任何时段之外的回退温度。集成还会创建 `switch.heating_schedule_pause` — 通过磁贴、自动化或任何位置切换它，可将每个房间设为回退温度并停止时间表，直到您将其切换回。",
+        "data": {
+          "setback": "回退温度"
+        }
+      },
+      "summary": {
+        "title": "将卡片添加到您的仪表板",
+        "description": "设置就绪。将卡片作为 Lovelace 资源添加（设置 → 仪表板 → 资源）：\n\n- URL `/heating_schedule/heating-window-slider-card.js`\n- 类型 *JavaScript 模块*\n\n然后将此 YAML 粘贴到 sections 风格的视图中：\n\n```yaml\n{dashboard_yaml}\n```\n\n点击 **提交** 完成。"
+      }
+    },
+    "error": {
+      "name_required": "请输入房间名称。"
+    },
+    "abort": {
+      "already_configured": "供暖时间表已配置。"
+    }
+  },
+  "entity": {
+    "text": {
+      "windows": { "name": "时段" }
+    },
+    "number": {
+      "comfort": { "name": "舒适" },
+      "window_count": { "name": "时段" }
+    },
+    "switch": {
+      "pause": { "name": "暂停" }
+    },
+    "time": {
+      "window_1_start": { "name": "▶1" },
+      "window_1_end":   { "name": "◼1" },
+      "window_2_start": { "name": "▶2" },
+      "window_2_end":   { "name": "◼2" },
+      "window_3_start": { "name": "▶3" },
+      "window_3_end":   { "name": "◼3" },
+      "window_4_start": { "name": "▶4" },
+      "window_4_end":   { "name": "◼4" }
+    }
+  }
+}
