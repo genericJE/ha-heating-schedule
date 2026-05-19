@@ -6,6 +6,8 @@
 
 A per-room heating schedule for Home Assistant. Each room gets a card with a 24-hour dual-handle slider for its heating window, a target-temperature spinner, the current room temperature, and a window open/closed indicator. A single automation enforces the schedule against `climate` entities (designed for Better Thermostat, works against any climate that accepts `set_temperature`).
 
+![Two schedule cards: Kitchen (active, window open) and Bedroom (inactive)](docs/schedule.png)
+
 ## What it gives you
 
 - **Per-room time windows** with a dual-handle range slider. Drag start and end on a 24-hour track; the window wraps around midnight when start is after end (e.g. 22:00 → 07:00 for a bedroom).
