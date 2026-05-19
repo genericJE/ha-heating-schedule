@@ -307,6 +307,12 @@ class HeatingScheduleController:
         climate_state = self.hass.states.get(room.climate_entity)
         if climate_state is None or is_unusable(climate_state.state):
             return
+        # Skip while Better Thermostat's window-open frost-protect is
+        # active: BT holds its frost target for as long as the window is
+        # open, so a write here loses every tick and just generates churn
+        # until the window closes.
+        if climate_state.attributes.get("window_open"):
+            return
         current = climate_state.attributes.get("temperature")
         if current is None:
             return
