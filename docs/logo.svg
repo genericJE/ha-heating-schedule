@@ -1,28 +1,40 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256" role="img" aria-label="Heating Schedule logo: a radiator with rising heat waves, above a slider with two handles">
-  <!-- Heat waves rising off the top of the radiator -->
-  <g fill="none" stroke="#FF9800" stroke-width="7" stroke-linecap="round">
-    <!-- bottom wave: widest, closest to the radiator -->
-    <path d="M76 56 q12 -14 24 0 t24 0 t24 0 t24 0"/>
-    <!-- middle wave -->
-    <path d="M92 32 q10 -12 20 0 t20 0 t20 0"/>
-    <!-- top wave: smallest, highest -->
-    <path d="M108 12 q8 -10 16 0 t16 0"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256" role="img" aria-label="Heating Schedule logo: a radiator with three rising heat squiggles, above a slider with two handles">
+  <!-- Heat waves: 3 identical vertical squiggles, evenly spaced across the radiator's width -->
+  <g fill="none" stroke="#FF9800" stroke-width="6" stroke-linecap="round">
+    <!-- Each path is a 36-tall vertical sine: starts at the top-of-radiator line, rises up.
+         The control offsets alternate so each segment curves opposite the previous one. -->
+    <path d="M84  64 q -10,-6 0,-12 t 0,-12 t 0,-12"/>
+    <path d="M128 64 q -10,-6 0,-12 t 0,-12 t 0,-12"/>
+    <path d="M172 64 q -10,-6 0,-12 t 0,-12 t 0,-12"/>
   </g>
 
-  <!-- Radiator: literal mdi:radiator path scaled 4x and centred -->
-  <g transform="translate(80 76) scale(4)" fill="#FF9800">
-    <path d="M7,7H17V9H19V11H21V13H19V15H17V17H15V11H13V13H11V11H9V13H7V15H5V13H3V11H5V9H7V7M5,17H7V19H5V17M9,19H11V21H9V19M13,17H15V19H13V17M17,19H19V21H17V19Z"/>
+  <!-- Radiator: clean stylized 4-fin design with top + bottom caps, plus 4 drop dots below -->
+  <g fill="#FF9800">
+    <!-- Top cap -->
+    <rect x="32" y="76" width="192" height="14" rx="6"/>
+    <!-- Bottom cap -->
+    <rect x="32" y="166" width="192" height="14" rx="6"/>
+    <!-- 4 vertical fins (rounded, slightly overlapping caps for a joined silhouette) -->
+    <rect x="56"  y="82" width="22" height="92" rx="9"/>
+    <rect x="98"  y="82" width="22" height="92" rx="9"/>
+    <rect x="138" y="82" width="22" height="92" rx="9"/>
+    <rect x="178" y="82" width="22" height="92" rx="9"/>
+    <!-- 4 drop dots below, evenly spaced and matching the fins' x-centres -->
+    <circle cx="67"  cy="194" r="5"/>
+    <circle cx="109" cy="194" r="5"/>
+    <circle cx="149" cy="194" r="5"/>
+    <circle cx="189" cy="194" r="5"/>
   </g>
 
   <!-- Slider track + active-window fill -->
-  <rect x="32" y="216" width="192" height="8" rx="4" fill="#D8D8D8"/>
-  <rect x="74" y="216" width="108" height="8" rx="4" fill="#FF9800"/>
+  <rect x="32" y="220" width="192" height="8" rx="4" fill="#D8D8D8"/>
+  <rect x="74" y="220" width="108" height="8" rx="4" fill="#FF9800"/>
 
-  <!-- Two handles, matching the card's white-fill + orange-ring + orange-dot style -->
+  <!-- Two handles, white fill + orange ring + orange centre dot -->
   <g>
-    <circle cx="74"  cy="220" r="14" fill="#FFFFFF" stroke="#FF9800" stroke-width="4"/>
-    <circle cx="74"  cy="220" r="6"  fill="#FF9800"/>
-    <circle cx="182" cy="220" r="14" fill="#FFFFFF" stroke="#FF9800" stroke-width="4"/>
-    <circle cx="182" cy="220" r="6"  fill="#FF9800"/>
+    <circle cx="74"  cy="224" r="14" fill="#FFFFFF" stroke="#FF9800" stroke-width="4"/>
+    <circle cx="74"  cy="224" r="6"  fill="#FF9800"/>
+    <circle cx="182" cy="224" r="14" fill="#FFFFFF" stroke="#FF9800" stroke-width="4"/>
+    <circle cx="182" cy="224" r="6"  fill="#FF9800"/>
   </g>
 </svg>

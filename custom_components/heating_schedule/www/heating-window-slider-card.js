@@ -740,17 +740,8 @@ if (!customElements.get(CARD_TAG)) {
 const EDITOR_SCHEMA = [
   { name: 'name', selector: { text: {} } },
   {
-    name: 'windows_entity',
-    required: true,
-    selector: { entity: { domain: ['text', 'input_text'] } },
-  },
-  {
-    name: 'comfort_entity',
-    required: true,
-    selector: { entity: { domain: ['number', 'input_number'] } },
-  },
-  {
     name: 'climate_entity',
+    required: true,
     selector: { entity: { domain: 'climate' } },
   },
   {
@@ -769,12 +760,25 @@ const EDITOR_SCHEMA = [
 
 const EDITOR_LABELS = {
   name: 'Name (optional, defaults to entity friendly name)',
-  windows_entity: 'Windows entity (text / input_text holding the JSON window list)',
-  comfort_entity: 'Comfort entity (number / input_number for the target temperature)',
-  climate_entity: 'Climate entity (optional, drives subtitle + heating tint)',
+  climate_entity: 'Climate entity (the room\'s TRV)',
   current_temp_entity: 'Current temperature sensor (optional)',
   window_entity: 'Window open binary sensor (optional)',
   step_minutes: `Slider step (default ${DEFAULT_STEP})`,
+};
+
+// windows_entity + comfort_entity aren't surfaced in the editor — the
+// integration's per-room device names them deterministically off the room
+// slug, which we recover from the climate entity_id. Accepts both
+// "climate.kitchen_heating" (user's BT pattern) and "climate.kitchen".
+const deriveCompanionEntities = (climateEntityId) => {
+  if (!climateEntityId || typeof climateEntityId !== 'string') return null;
+  const m = climateEntityId.match(/^climate\.(.+?)(?:_heating)?$/);
+  if (!m) return null;
+  const slug = m[1];
+  return {
+    windows_entity: `text.${slug}_windows`,
+    comfort_entity: `number.${slug}_comfort`,
+  };
 };
 
 class HeatingWindowSliderCardEditor extends HTMLElement {
@@ -786,7 +790,19 @@ class HeatingWindowSliderCardEditor extends HTMLElement {
   }
 
   setConfig(config) {
-    this._config = { ...config };
+    const next = { ...config };
+    // Migrate legacy configs and keep windows/comfort aligned with the
+    // climate entity. If derivation changes anything, fire config-changed
+    // immediately so the dashboard edit dialog picks up the migration on
+    // first open.
+    const initial = JSON.stringify(next);
+    this._applyDerivation(next);
+    this._config = next;
+    if (JSON.stringify(next) !== initial) {
+      // Defer so the dispatch happens after Lovelace has finished wiring
+      // its listeners to this element.
+      queueMicrotask(() => this._fireConfigChanged());
+    }
     this._renderOrUpdate();
   }
 
@@ -799,6 +815,19 @@ class HeatingWindowSliderCardEditor extends HTMLElement {
     this._renderOrUpdate();
   }
 
+  _applyDerivation(cfg) {
+    const derived = deriveCompanionEntities(cfg.climate_entity);
+    if (derived) Object.assign(cfg, derived);
+  }
+
+  _fireConfigChanged() {
+    this.dispatchEvent(new CustomEvent('config-changed', {
+      detail: { config: this._config },
+      bubbles: true,
+      composed: true,
+    }));
+  }
+
   _renderOrUpdate() {
     if (!this._form) {
       const form = document.createElement('ha-form');
@@ -806,19 +835,19 @@ class HeatingWindowSliderCardEditor extends HTMLElement {
       form.addEventListener('value-changed', (e) => {
         e.stopPropagation();
         // ha-form sends the full updated object as e.detail.value. Preserve
-        // any keys outside the schema (notably `type`) by spreading on top
-        // of our previous config rather than replacing wholesale.
+        // any keys outside the schema (notably `type` and the derived
+        // windows_entity/comfort_entity) by spreading on top of our
+        // previous config rather than replacing wholesale.
         const next = { ...this._config, ...e.detail.value };
-        // Drop keys the user explicitly cleared, except `type`.
+        // Drop keys the user explicitly cleared, except `type` and the
+        // derived companion entities.
+        const protectedKeys = new Set(['type', 'windows_entity', 'comfort_entity']);
         Object.keys(next).forEach((k) => {
-          if (k !== 'type' && (next[k] === undefined || next[k] === '')) delete next[k];
+          if (!protectedKeys.has(k) && (next[k] === undefined || next[k] === '')) delete next[k];
         });
+        this._applyDerivation(next);
         this._config = next;
-        this.dispatchEvent(new CustomEvent('config-changed', {
-          detail: { config: next },
-          bubbles: true,
-          composed: true,
-        }));
+        this._fireConfigChanged();
       });
       this.appendChild(form);
       this._form = form;
