@@ -42,10 +42,12 @@ from .const import (
     MAX_WINDOWS,
 )
 
+from ._windows import initial_windows_json
+
 _LOGGER = logging.getLogger(__name__)
 
 # Per-room defaults for the first window. The wizard's window-count slider
-# generates additional windows from there using _place_new_window.
+# generates additional windows from there via initial_windows_json.
 _SUGGESTED_ROOMS: tuple[tuple[str, tuple[str, str]], ...] = (
     ("Bedroom", ("22:00", "07:00")),
     ("Living Room", ("07:00", "23:00")),
@@ -53,66 +55,9 @@ _SUGGESTED_ROOMS: tuple[tuple[str, tuple[str, str]], ...] = (
     ("Bathroom", ("07:00", "22:00")),
 )
 _MAX_ROOMS = 12
-_DAY = 1440
-_NEW_WINDOW_MIN_MINUTES = 60
 
 CONF_ROOM_COUNT = "room_count"
 CONF_WINDOW_COUNT = "window_count"
-
-
-def _hhmm_to_min(s: str) -> int:
-    h, m = s.split(":")
-    return int(h) * 60 + int(m)
-
-
-def _min_to_hhmm(m: int) -> str:
-    v = m % _DAY
-    return f"{v // 60:02d}:{v % 60:02d}"
-
-
-def _place_new_window(existing: list[list[str]]) -> list[str]:
-    """Python port of placeNewWindow in heating-window-slider-card.js.
-
-    Picks a new [start, end] window centred in the largest cyclic gap
-    between the existing ones, so additions don't stack on the same slot.
-    """
-    if not existing:
-        return ["07:00", "22:00"]
-    spans: list[tuple[int, int]] = []
-    for w in existing:
-        s, e = _hhmm_to_min(w[0]), _hhmm_to_min(w[1])
-        if s == e:
-            continue
-        if s < e:
-            spans.append((s, e))
-        else:
-            spans.append((s, _DAY))
-            spans.append((0, e))
-    spans.sort()
-    if not spans:
-        return ["07:00", "22:00"]
-    best_gap_start, best_gap_size = 0, 0
-    for i, span in enumerate(spans):
-        prev = (spans[-1][0] - _DAY, spans[-1][1] - _DAY) if i == 0 else spans[i - 1]
-        gap_start, gap_size = prev[1], span[0] - prev[1]
-        if gap_size > best_gap_size:
-            best_gap_size = gap_size
-            best_gap_start = gap_start % _DAY
-    if best_gap_size < _NEW_WINDOW_MIN_MINUTES:
-        best_gap_size = max(best_gap_size, 30)
-    win_size = min(_NEW_WINDOW_MIN_MINUTES, best_gap_size // 2)
-    start = (best_gap_start + (best_gap_size - win_size) // 2 + _DAY) % _DAY
-    end = (start + win_size) % _DAY
-    return [_min_to_hhmm(start), _min_to_hhmm(end)]
-
-
-def _generate_initial_windows(count: int, base: tuple[str, str]) -> str:
-    """Build the JSON used as the text entity's first state, given count."""
-    count = max(1, min(MAX_WINDOWS, int(count)))
-    windows = [list(base)]
-    while len(windows) < count:
-        windows.append(_place_new_window(windows))
-    return json.dumps(windows)
 
 
 class HeatingScheduleConfigFlow(ConfigFlow, domain=DOMAIN):
@@ -185,7 +130,7 @@ class HeatingScheduleConfigFlow(ConfigFlow, domain=DOMAIN):
                         CONF_COMFORT_DEFAULT: float(
                             user_input[CONF_COMFORT_DEFAULT]
                         ),
-                        CONF_WINDOWS_DEFAULT: _generate_initial_windows(
+                        CONF_WINDOWS_DEFAULT: initial_windows_json(
                             count, suggested_base
                         ),
                     }

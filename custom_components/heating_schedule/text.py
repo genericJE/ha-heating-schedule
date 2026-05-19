@@ -77,6 +77,11 @@ class HeatingWindowsText(HeatingScheduleRoomEntity, TextEntity, RestoreEntity):
         super().__init__(entry, slug, room_name)
         self._attr_unique_id = f"{entry.entry_id}_{slug}_windows"
         self._attr_native_value = _validated_or_default(initial_json)
+        # Detach from the room device entirely so it doesn't clutter the
+        # device's controls modal (where the time pickers + comfort are the
+        # editing surface). The entity stays in the entity registry and the
+        # card + time entities keep reading/writing its JSON.
+        self._attr_device_info = None
 
     async def async_added_to_hass(self) -> None:
         """Restore last known value or fall back to the configured default."""

@@ -199,11 +199,20 @@ class HeatingScheduleController:
             if not entity_id:
                 continue
             entry = registry.async_get(entity_id)
-            if entry is None or entry.hidden_by is not None:
-                continue  # already hidden by someone (us or user) — leave alone
-            registry.async_update_entity(
-                entity_id, hidden_by=er.RegistryEntryHider.INTEGRATION
-            )
+            if entry is None:
+                continue
+            update: dict[str, object] = {}
+            # Detach from the room device — covers existing installs that
+            # were created before HeatingWindowsText dropped device_info.
+            if entry.device_id is not None:
+                update["device_id"] = None
+            # Mark hidden — covers existing installs that pre-date
+            # entity_registry_visible_default=False. Skip if the user has
+            # already chosen a hidden_by themselves (USER, etc).
+            if entry.hidden_by is None:
+                update["hidden_by"] = er.RegistryEntryHider.INTEGRATION
+            if update:
+                registry.async_update_entity(entity_id, **update)
 
     @callback
     def _reconcile_time_entities_for_room(self, room: _Room) -> None:

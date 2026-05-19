@@ -1,15 +1,19 @@
-"""Number platform: per-room comfort temperature."""
+"""Number platform: per-room comfort temperature + heating-window count."""
 
 from __future__ import annotations
 
+import json
+import logging
 from typing import TYPE_CHECKING
 
 from homeassistant.components.number import NumberEntity, NumberMode
 from homeassistant.const import UnitOfTemperature
-from homeassistant.core import HomeAssistant
+from homeassistant.core import Event, EventStateChangedData, HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.event import async_track_state_change_event
 from homeassistant.helpers.restore_state import RestoreEntity
 
+from ._windows import parse_windows, resize_windows
 from .const import (
     CONF_COMFORT_DEFAULT,
     CONF_NAME,
@@ -19,11 +23,14 @@ from .const import (
     DEFAULT_COMFORT_MAX,
     DEFAULT_COMFORT_MIN,
     DEFAULT_COMFORT_STEP,
+    MAX_WINDOWS,
 )
 from .entity import HeatingScheduleRoomEntity
 
 if TYPE_CHECKING:
     from . import HeatingScheduleConfigEntry
+
+_LOGGER = logging.getLogger(__name__)
 
 
 async def async_setup_entry(
@@ -31,17 +38,20 @@ async def async_setup_entry(
     entry: HeatingScheduleConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
-    """Set up the comfort-temperature number entities."""
-    rooms = entry.data.get(CONF_ROOMS, [])
-    entities = [
-        HeatingComfortNumber(
-            entry,
-            slug=room[CONF_SLUG],
-            room_name=room[CONF_NAME],
-            initial_value=float(room.get(CONF_COMFORT_DEFAULT, DEFAULT_COMFORT)),
+    """Set up the comfort + window-count number entities for each room."""
+    entities: list[NumberEntity] = []
+    for room in entry.data.get(CONF_ROOMS, []):
+        slug = room[CONF_SLUG]
+        room_name = room[CONF_NAME]
+        entities.append(
+            HeatingComfortNumber(
+                entry,
+                slug=slug,
+                room_name=room_name,
+                initial_value=float(room.get(CONF_COMFORT_DEFAULT, DEFAULT_COMFORT)),
+            )
         )
-        for room in rooms
-    ]
+        entities.append(HeatingWindowCountNumber(entry, slug=slug, room_name=room_name))
     async_add_entities(entities)
 
 
@@ -81,6 +91,74 @@ class HeatingComfortNumber(HeatingScheduleRoomEntity, NumberEntity, RestoreEntit
         if clamped != self._attr_native_value:
             self._attr_native_value = clamped
             self.async_write_ha_state()
+
+
+class HeatingWindowCountNumber(HeatingScheduleRoomEntity, NumberEntity):
+    """How many heating windows the room schedule should have.
+
+    Backed by the text entity's JSON array length. Writes resize the JSON
+    via text.set_value, mirroring the card editor's window_count slider:
+    truncate when shrinking, place_new_window in the largest cyclic gap
+    when growing.
+    """
+
+    _attr_translation_key = "window_count"
+    _attr_native_min_value = 1
+    _attr_native_max_value = MAX_WINDOWS
+    _attr_native_step = 1
+    _attr_mode = NumberMode.SLIDER
+    _attr_icon = "mdi:calendar-multiple"
+
+    def __init__(
+        self,
+        entry: HeatingScheduleConfigEntry,
+        slug: str,
+        room_name: str,
+    ) -> None:
+        super().__init__(entry, slug, room_name)
+        self._attr_unique_id = f"{entry.entry_id}_{slug}_window_count"
+
+    @property
+    def _windows_entity_id(self) -> str:
+        return f"text.{self._slug}_windows"
+
+    @property
+    def native_value(self) -> int | None:
+        if self.hass is None:
+            return None
+        state = self.hass.states.get(self._windows_entity_id)
+        if state is None or state.state in ("unavailable", "unknown", "none", ""):
+            return None
+        count = len(parse_windows(state.state))
+        return count if count > 0 else None
+
+    async def async_added_to_hass(self) -> None:
+        await super().async_added_to_hass()
+        # Re-render when the text entity's JSON changes (drag in card, edit
+        # in card editor, time-picker write, etc).
+        self.async_on_remove(
+            async_track_state_change_event(
+                self.hass, [self._windows_entity_id], self._on_text_change
+            )
+        )
+
+    @callback
+    def _on_text_change(self, _event: Event[EventStateChangedData]) -> None:
+        self.async_write_ha_state()
+
+    async def async_set_native_value(self, value: float) -> None:
+        target = max(1, min(MAX_WINDOWS, int(value)))
+        state = self.hass.states.get(self._windows_entity_id)
+        existing = parse_windows(state.state if state else None)
+        if len(existing) == target:
+            return
+        new = resize_windows(existing, target)
+        await self.hass.services.async_call(
+            "text",
+            "set_value",
+            {"entity_id": self._windows_entity_id, "value": json.dumps(new)},
+            blocking=False,
+        )
 
 
 def _clamp(value: float) -> float:
