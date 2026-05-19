@@ -113,6 +113,11 @@ const css = `
     background: var(--state-active-color, #ff9800);
     color: var(--text-primary-color, #fff);
   }
+  .badge.paused {
+    background: var(--disabled-text-color, #9e9e9e);
+    color: var(--text-primary-color, #fff);
+    cursor: help;
+  }
   .window-icon {
     --mdc-icon-size: 18px;
     flex: 0 0 auto;
@@ -187,6 +192,11 @@ const css = `
     background: var(--primary-color, #ff9800);
     border-radius: 3px;
     pointer-events: none;
+    transition: background 0.2s, opacity 0.2s;
+  }
+  .slider-wrap.paused .fill {
+    background: var(--disabled-text-color, #9e9e9e);
+    opacity: 0.6;
   }
   .now-mark {
     position: absolute;
@@ -211,6 +221,7 @@ const css = `
     cursor: grab;
     z-index: 2;
     box-sizing: border-box;
+    transition: border-color 0.2s;
   }
   .handle.dragging { cursor: grabbing; box-shadow: 0 2px 6px rgba(0,0,0,0.35); }
   .handle::after {
@@ -219,7 +230,10 @@ const css = `
     inset: 4px;
     border-radius: 50%;
     background: var(--primary-color, #ff9800);
+    transition: background 0.2s;
   }
+  .slider-wrap.paused .handle { border-color: var(--disabled-text-color, #9e9e9e); }
+  .slider-wrap.paused .handle::after { background: var(--disabled-text-color, #9e9e9e); }
   .tooltip {
     position: absolute;
     bottom: 32px;
@@ -582,6 +596,15 @@ class HeatingWindowSliderCard extends HTMLElement {
     return d.getHours() * 60 + d.getMinutes();
   }
 
+  // Look up pause state from either the integration's switch or the
+  // peer input_boolean — the integration's _PauseSync keeps them aligned,
+  // so finding either ON is sufficient.
+  _isPaused() {
+    if (!this._hass) return false;
+    const candidates = ['switch.heating_schedule_pause', 'input_boolean.heating_paused'];
+    return candidates.some((eid) => this._hass.states[eid]?.state === 'on');
+  }
+
   _update() {
     if (!this._rendered || !this._hass || !this._config) return;
     const windows = this._readWindows();
@@ -605,8 +628,19 @@ class HeatingWindowSliderCard extends HTMLElement {
     this._els.climateIcon.icon = heating ? 'mdi:radiator' : 'mdi:radiator-disabled';
     this._els.climateIcon.classList.toggle('heating', !!heating);
 
-    this._els.badge.textContent = anyActive ? 'active' : 'inactive';
-    this._els.badge.classList.toggle('active', anyActive);
+    const paused = this._isPaused();
+    this._els.wrap.classList.toggle('paused', paused);
+    if (paused) {
+      this._els.badge.textContent = 'disabled';
+      this._els.badge.title = 'heating is paused';
+      this._els.badge.classList.remove('active');
+      this._els.badge.classList.add('paused');
+    } else {
+      this._els.badge.textContent = anyActive ? 'active' : 'inactive';
+      this._els.badge.title = '';
+      this._els.badge.classList.toggle('active', anyActive);
+      this._els.badge.classList.remove('paused');
+    }
 
     const winState = this._config.window_entity ? this._hass.states[this._config.window_entity] : null;
     if (winState && ['on','off'].includes(winState.state)) {
