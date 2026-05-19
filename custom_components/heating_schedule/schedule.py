@@ -27,7 +27,6 @@ from homeassistant.util import dt as dt_util
 from .const import (
     CONF_CLIMATE_ENTITY,
     CONF_NAME,
-    CONF_PAUSE_ENTITY,
     CONF_ROOMS,
     CONF_SETBACK,
     CONF_SLUG,
@@ -35,6 +34,7 @@ from .const import (
     DEFAULT_SETBACK,
     DOMAIN,
     PAUSE_SETTLE_SECONDS,
+    PAUSE_UNIQUE_SUFFIX,
 )
 
 if TYPE_CHECKING:
@@ -64,8 +64,15 @@ class HeatingScheduleController:
         self.entry = entry
         self._unsub_callbacks: list[CALLBACK_TYPE] = []
         self._rooms = self._resolve_rooms()
-        self._pause_entity: str | None = entry.data.get(CONF_PAUSE_ENTITY) or None
+        self._pause_entity: str | None = self._resolve_pause_switch()
         self._setback: float = float(entry.data.get(CONF_SETBACK, DEFAULT_SETBACK))
+
+    def _resolve_pause_switch(self) -> str | None:
+        """Look up the integration's own pause switch via the registry."""
+        registry = er.async_get(self.hass)
+        return registry.async_get_entity_id(
+            "switch", DOMAIN, f"{self.entry.entry_id}_{PAUSE_UNIQUE_SUFFIX}"
+        )
 
     def _resolve_rooms(self) -> list[_Room]:
         """Resolve the actual entity_id for each per-room text/number.
@@ -104,6 +111,7 @@ class HeatingScheduleController:
         # Re-resolve in case platform setup just registered entities that
         # weren't yet in the registry when __init__ ran.
         self._rooms = self._resolve_rooms()
+        self._pause_entity = self._resolve_pause_switch()
         watched_per_room: list[str] = []
         for room in self._rooms:
             watched_per_room.append(room.windows_entity)
@@ -166,11 +174,12 @@ class HeatingScheduleController:
         new = event.data.get("new_state")
         if old is None or new is None:
             return
-        # Mirror the YAML automation: only the on -> off transition triggers
-        # a re-evaluation (with the settle delay). The on -> on / off -> on
-        # cases are no-ops here because the entry-point evaluate already
-        # short-circuits while paused.
-        if old.state == "on" and new.state == "off":
+        if old.state == "off" and new.state == "on":
+            # Active push to setback so currently-warm rooms cool down,
+            # mirroring the YAML "Apply Heating Pause" automation.
+            self.hass.async_create_task(self._apply_setback_all())
+        elif old.state == "on" and new.state == "off":
+            # 5 s settle then re-evaluate from schedule + comfort.
             self.hass.async_create_task(self._evaluate_all_after_settle())
 
     @callback
@@ -196,6 +205,42 @@ class HeatingScheduleController:
             return_exceptions=False,
         )
 
+    async def _apply_setback_all(self) -> None:
+        """Push every room's climate entity to the setback temperature.
+
+        Used when the pause switch flips on. Honors the same idempotent
+        guard as the normal evaluation path so rooms already at setback
+        stay quiet.
+        """
+        await asyncio.gather(
+            *(self._write_climate(room, self._setback) for room in self._rooms),
+            return_exceptions=False,
+        )
+
+    async def _write_climate(self, room: _Room, desired: float) -> None:
+        climate_state = self.hass.states.get(room.climate_entity)
+        if climate_state is None or climate_state.state in _UNUSABLE_STATES:
+            return
+        current = climate_state.attributes.get("temperature")
+        if current is None:
+            return
+        try:
+            if abs(float(current) - desired) < 1e-6:
+                return
+        except (TypeError, ValueError):
+            return
+        _LOGGER.debug(
+            "heating_schedule: %s -> %.1f (pause-driven)",
+            room.climate_entity,
+            desired,
+        )
+        await self.hass.services.async_call(
+            "climate",
+            "set_temperature",
+            {"entity_id": room.climate_entity, "temperature": desired},
+            blocking=False,
+        )
+
     async def _evaluate_room(self, room: _Room) -> None:
         if self._is_paused():
             return
@@ -208,33 +253,7 @@ class HeatingScheduleController:
         minute = now.hour * 60 + now.minute
         active = any(_in_window(s, e, minute) for s, e in windows)
         desired = comfort if active else self._setback
-
-        climate_state = self.hass.states.get(room.climate_entity)
-        if climate_state is None or climate_state.state in _UNUSABLE_STATES:
-            return
-
-        current = climate_state.attributes.get("temperature")
-        if current is None:
-            return
-        try:
-            if abs(float(current) - desired) < 1e-6:
-                return
-        except (TypeError, ValueError):
-            return
-
-        _LOGGER.debug(
-            "heating_schedule: %s -> %.1f (active=%s, current=%s)",
-            room.climate_entity,
-            desired,
-            active,
-            current,
-        )
-        await self.hass.services.async_call(
-            "climate",
-            "set_temperature",
-            {"entity_id": room.climate_entity, "temperature": desired},
-            blocking=False,
-        )
+        await self._write_climate(room, desired)
 
     # ── helpers ───────────────────────────────────────────────────────────
 

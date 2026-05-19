@@ -4,13 +4,24 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from homeassistant.helpers.device_registry import DeviceInfo
+from homeassistant.helpers.device_registry import DeviceEntryType, DeviceInfo
 from homeassistant.helpers.entity import Entity
 
 from .const import DOMAIN
 
 if TYPE_CHECKING:
     from . import HeatingScheduleConfigEntry
+
+
+def hub_device_info(entry: HeatingScheduleConfigEntry) -> DeviceInfo:
+    """DeviceInfo for the integration-level hub device (holds the pause switch)."""
+    return DeviceInfo(
+        identifiers={(DOMAIN, entry.entry_id)},
+        name="Heating Schedule",
+        manufacturer="Heating Schedule",
+        model="Hub",
+        entry_type=DeviceEntryType.SERVICE,
+    )
 
 
 class HeatingScheduleRoomEntity(Entity):

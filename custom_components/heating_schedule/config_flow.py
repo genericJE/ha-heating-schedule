@@ -27,7 +27,6 @@ from .const import (
     CONF_COMFORT_DEFAULT,
     CONF_CURRENT_TEMP_ENTITY,
     CONF_NAME,
-    CONF_PAUSE_ENTITY,
     CONF_ROOMS,
     CONF_SETBACK,
     CONF_SLUG,
@@ -64,7 +63,6 @@ class HeatingScheduleConfigFlow(ConfigFlow, domain=DOMAIN):
         self._draft: dict[str, Any] = {
             CONF_ROOMS: [],
             CONF_SETBACK: DEFAULT_SETBACK,
-            CONF_PAUSE_ENTITY: None,
         }
         self._room_count: int = 0
         self._current_room_index: int = 0
@@ -180,9 +178,6 @@ class HeatingScheduleConfigFlow(ConfigFlow, domain=DOMAIN):
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
         if user_input is not None:
-            self._draft[CONF_PAUSE_ENTITY] = (
-                user_input.get(CONF_PAUSE_ENTITY) or None
-            )
             self._draft[CONF_SETBACK] = float(
                 user_input.get(CONF_SETBACK, DEFAULT_SETBACK)
             )
@@ -190,9 +185,6 @@ class HeatingScheduleConfigFlow(ConfigFlow, domain=DOMAIN):
 
         schema = vol.Schema(
             {
-                vol.Optional(CONF_PAUSE_ENTITY): selector.EntitySelector(
-                    selector.EntitySelectorConfig(domain="input_boolean")
-                ),
                 vol.Required(
                     CONF_SETBACK, default=DEFAULT_SETBACK
                 ): selector.NumberSelector(

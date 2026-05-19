@@ -21,10 +21,9 @@
         }
       },
       "globals": {
-        "title": "Setback and pause",
-        "description": "Optionally hook into an existing pause helper, and pick a setback temperature for the hours outside any window.",
+        "title": "Setback",
+        "description": "Pick the temperature to fall back to outside any window. The integration also creates `switch.heating_schedule_pause` — toggle it (from a tile, an automation, anywhere) to push every room to setback and stop the schedule until you toggle it back off.",
         "data": {
-          "pause_entity": "Pause helper (optional, input_boolean.heating_paused)",
           "setback": "Setback temperature"
         }
       },
@@ -49,6 +48,11 @@
     "number": {
       "comfort": {
         "name": "Comfort"
+      }
+    },
+    "switch": {
+      "pause": {
+        "name": "Pause"
       }
     }
   }
