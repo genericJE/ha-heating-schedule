@@ -764,12 +764,23 @@ const EDITOR_SCHEMA = [
   },
 ];
 
+// Keep labels short — ha-form's floating labels truncate inside narrow
+// edit dialogs. Longer context goes into EDITOR_HELPERS, rendered as
+// smaller text underneath each field via computeHelper.
 const EDITOR_LABELS = {
-  name: 'Name (optional, defaults to entity friendly name)',
-  climate_entity: 'Climate entity (the room\'s TRV)',
-  current_temp_entity: 'Current temperature sensor (optional)',
-  window_entity: 'Window open binary sensor (optional)',
+  name: 'Name',
+  climate_entity: 'Climate entity',
+  current_temp_entity: 'Temperature sensor',
+  window_entity: 'Window sensor',
   window_count: 'Number of heating windows',
+};
+
+const EDITOR_HELPERS = {
+  name: 'Defaults to the climate entity\'s friendly name.',
+  climate_entity: 'The room\'s TRV (target of set_temperature writes).',
+  current_temp_entity: 'Optional. Shown in the card subtitle.',
+  window_entity: 'Optional. Drives the open/closed icon on the card.',
+  window_count: 'Drag to add or remove sliders from the card.',
 };
 
 const DEFAULT_WINDOW = ['07:00', '22:00'];
@@ -930,6 +941,7 @@ class HeatingWindowSliderCardEditor extends HTMLElement {
     if (!this._form) {
       const form = document.createElement('ha-form');
       form.computeLabel = (s) => EDITOR_LABELS[s.name] || s.name;
+      form.computeHelper = (s) => EDITOR_HELPERS[s.name] || undefined;
       form.addEventListener('value-changed', (e) => {
         e.stopPropagation();
         const incoming = e.detail.value || {};

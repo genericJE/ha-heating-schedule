@@ -53,6 +53,11 @@ class HeatingWindowsText(HeatingScheduleRoomEntity, TextEntity, RestoreEntity):
     name and the translation key). Schedule controller resolves it via the
     entity registry by unique_id, so the device-derived slug doesn't have
     to match the slug in entry.data.
+
+    Hidden by default — the device page surfaces the per-window time pickers
+    instead, which are friendlier to edit than raw JSON. The text entity
+    keeps existing for backwards-compat and as the canonical source of truth
+    the card reads from.
     """
 
     _attr_translation_key = "windows"
@@ -60,6 +65,7 @@ class HeatingWindowsText(HeatingScheduleRoomEntity, TextEntity, RestoreEntity):
     _attr_native_min = 0
     _attr_native_max = 255
     _attr_icon = "mdi:calendar-clock"
+    _attr_entity_registry_visible_default = False
 
     def __init__(
         self,

@@ -155,6 +155,11 @@ class HeatingScheduleController:
         # differs from the registry's stored disabled_by state.
         for room in self._rooms:
             self._reconcile_time_entities_for_room(room)
+        # One-shot migration: hide the raw windows text entity from the
+        # device page on installs that pre-date the time-picker platform.
+        # Only flips entities the integration owns; user-hidden ones are
+        # left alone.
+        self._hide_text_entities_on_first_run()
 
         if self.hass.is_running:
             self.hass.async_create_task(self._evaluate_all_after_settle())
@@ -184,6 +189,21 @@ class HeatingScheduleController:
                     self._reconcile_time_entities_for_room(room)
                 self.hass.async_create_task(self._evaluate_room(room))
                 return
+
+    @callback
+    def _hide_text_entities_on_first_run(self) -> None:
+        registry = er.async_get(self.hass)
+        for room in self._rooms:
+            unique_id = f"{self.entry.entry_id}_{room.slug}_windows"
+            entity_id = registry.async_get_entity_id("text", DOMAIN, unique_id)
+            if not entity_id:
+                continue
+            entry = registry.async_get(entity_id)
+            if entry is None or entry.hidden_by is not None:
+                continue  # already hidden by someone (us or user) — leave alone
+            registry.async_update_entity(
+                entity_id, hidden_by=er.RegistryEntryHider.INTEGRATION
+            )
 
     @callback
     def _reconcile_time_entities_for_room(self, room: _Room) -> None:
