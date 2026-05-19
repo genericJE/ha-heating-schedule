@@ -216,8 +216,10 @@ class HeatingSetbackNumber(NumberEntity, RestoreEntity):
 
     @property
     def suggested_object_id(self) -> str | None:
-        # Yields number.heating_schedule_setback regardless of translation.
-        return f"heating_schedule_{SETBACK_UNIQUE_SUFFIX}"
+        # HA prepends the hub device slug ("heating_schedule") for
+        # has_entity_name entities, so return just the suffix. Result:
+        # number.heating_schedule_setback regardless of translation.
+        return SETBACK_UNIQUE_SUFFIX
 
     async def async_added_to_hass(self) -> None:
         await super().async_added_to_hass()
