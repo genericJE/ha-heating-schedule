@@ -753,8 +753,11 @@ const EDITOR_SCHEMA = [
     selector: { entity: { domain: 'binary_sensor' } },
   },
   {
-    name: 'step_minutes',
-    selector: { number: { min: 1, max: 60, step: 1, mode: 'box', unit_of_measurement: 'min' } },
+    // Synthetic field: not stored in the card config. The form populates it
+    // from the current windows_entity state's JSON array length and writes
+    // a re-sized JSON back to the text entity on change.
+    name: 'window_count',
+    selector: { number: { min: 1, max: MAX_WINDOWS, step: 1, mode: 'box' } },
   },
 ];
 
@@ -763,8 +766,10 @@ const EDITOR_LABELS = {
   climate_entity: 'Climate entity (the room\'s TRV)',
   current_temp_entity: 'Current temperature sensor (optional)',
   window_entity: 'Window open binary sensor (optional)',
-  step_minutes: `Slider step (default ${DEFAULT_STEP})`,
+  window_count: 'Number of heating windows',
 };
+
+const DEFAULT_WINDOW = ['07:00', '22:00'];
 
 // windows_entity + comfort_entity aren't surfaced in the editor — the
 // integration's per-room device names them deterministically off the room
@@ -828,19 +833,56 @@ class HeatingWindowSliderCardEditor extends HTMLElement {
     }));
   }
 
+  _readWindowCount() {
+    const eid = this._config.windows_entity;
+    if (!eid || !this._hass) return undefined;
+    const raw = this._hass.states[eid]?.state;
+    if (!raw) return undefined;
+    try {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) return parsed.length;
+    } catch (e) { /* unparseable, ignore */ }
+    return undefined;
+  }
+
+  async _resizeWindows(eid, target) {
+    const clamped = Math.max(1, Math.min(MAX_WINDOWS, target | 0));
+    const raw = this._hass.states[eid]?.state;
+    let windows = [];
+    try {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) windows = parsed.filter(w => Array.isArray(w) && w.length === 2);
+    } catch (e) { /* fall through to empty + grow */ }
+    if (windows.length === clamped) return;
+    if (windows.length > clamped) {
+      windows = windows.slice(0, clamped);
+    } else {
+      while (windows.length < clamped) windows.push([...DEFAULT_WINDOW]);
+    }
+    const domain = (eid.split('.')[0]) || 'text';
+    await this._hass.callService(domain, 'set_value', { entity_id: eid, value: JSON.stringify(windows) });
+  }
+
   _renderOrUpdate() {
     if (!this._form) {
       const form = document.createElement('ha-form');
       form.computeLabel = (s) => EDITOR_LABELS[s.name] || s.name;
       form.addEventListener('value-changed', (e) => {
         e.stopPropagation();
+        const incoming = e.detail.value || {};
+
+        // window_count is synthetic — write to the entity but don't persist
+        // it in the card config.
+        if ('window_count' in incoming && this._config.windows_entity) {
+          this._resizeWindows(this._config.windows_entity, incoming.window_count);
+        }
+
         // ha-form sends the full updated object as e.detail.value. Preserve
         // any keys outside the schema (notably `type` and the derived
         // windows_entity/comfort_entity) by spreading on top of our
         // previous config rather than replacing wholesale.
-        const next = { ...this._config, ...e.detail.value };
-        // Drop keys the user explicitly cleared, except `type` and the
-        // derived companion entities.
+        const next = { ...this._config, ...incoming };
+        delete next.window_count; // synthetic, never saved
         const protectedKeys = new Set(['type', 'windows_entity', 'comfort_entity']);
         Object.keys(next).forEach((k) => {
           if (!protectedKeys.has(k) && (next[k] === undefined || next[k] === '')) delete next[k];
@@ -853,7 +895,10 @@ class HeatingWindowSliderCardEditor extends HTMLElement {
       this._form = form;
     }
     this._form.schema = EDITOR_SCHEMA;
-    this._form.data = this._config;
+    const count = this._readWindowCount();
+    this._form.data = count !== undefined
+      ? { ...this._config, window_count: count }
+      : { ...this._config };
     if (this._hass) this._form.hass = this._hass;
   }
 }

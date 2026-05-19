@@ -19,11 +19,6 @@
     <rect x="98"  y="82" width="22" height="92" rx="9"/>
     <rect x="138" y="82" width="22" height="92" rx="9"/>
     <rect x="178" y="82" width="22" height="92" rx="9"/>
-    <!-- 4 drop dots below, evenly spaced and matching the fins' x-centres -->
-    <circle cx="67"  cy="194" r="5"/>
-    <circle cx="109" cy="194" r="5"/>
-    <circle cx="149" cy="194" r="5"/>
-    <circle cx="189" cy="194" r="5"/>
   </g>
 
   <!-- Slider track + active-window fill -->
