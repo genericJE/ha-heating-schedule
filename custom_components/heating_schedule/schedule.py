@@ -12,6 +12,7 @@ from typing import TYPE_CHECKING
 from homeassistant.const import EVENT_HOMEASSISTANT_STARTED
 from homeassistant.core import (
     CALLBACK_TYPE,
+    Context,
     Event,
     EventStateChangedData,
     HomeAssistant,
@@ -23,6 +24,10 @@ from homeassistant.helpers.event import (
     async_track_time_interval,
 )
 from homeassistant.util import dt as dt_util
+
+# Hard-coded peer for the pause sync. If your install uses a different
+# input_boolean to gate pause-related YAML automations, change this.
+EXTERNAL_PAUSE_BOOLEAN = "input_boolean.heating_paused"
 
 from .const import (
     CONF_CLIMATE_ENTITY,
@@ -66,6 +71,7 @@ class HeatingScheduleController:
         self._rooms = self._resolve_rooms()
         self._pause_entity: str | None = self._resolve_pause_switch()
         self._setback: float = float(entry.data.get(CONF_SETBACK, DEFAULT_SETBACK))
+        self._pause_sync = _PauseSync(hass)
 
     def _resolve_pause_switch(self) -> str | None:
         """Look up the integration's own pause switch via the registry."""
@@ -142,6 +148,8 @@ class HeatingScheduleController:
             )
         )
 
+        await self._pause_sync.async_start(self._pause_entity)
+
         if self.hass.is_running:
             self.hass.async_create_task(self._evaluate_all_after_settle())
         else:
@@ -150,6 +158,7 @@ class HeatingScheduleController:
 
     async def async_stop(self) -> None:
         """Cancel all subscriptions."""
+        await self._pause_sync.async_stop()
         for unsub in self._unsub_callbacks:
             unsub()
         self._unsub_callbacks.clear()
@@ -293,6 +302,105 @@ class HeatingScheduleController:
                 continue
             out.append((s, e))
         return out
+
+
+class _PauseSync:
+    """Mirror switch.heating_schedule_pause <-> input_boolean.heating_paused.
+
+    Either side can be toggled by anything (dashboard tile, YAML automation,
+    voice assistant, leave-home notification). When one flips, we propagate
+    to the other so the rest of the install (Apply Heating Pause, Resume
+    Heating on Return, Hc1DayTemp lowering, scene snapshot, vacation cascade)
+    keeps working unchanged. The integration's switch is the canonical pause
+    state the controller responds to; the input_boolean is a peer the rest of
+    the install was already wired to.
+
+    Feedback-loop guard: every sync write uses a fresh Context. The peer's
+    resulting state_changed event carries that context.id; we skip those.
+    The peer only acts on changes that came from elsewhere.
+    """
+
+    def __init__(self, hass: HomeAssistant) -> None:
+        self.hass = hass
+        self._switch_entity: str | None = None
+        self._own_context_ids: set[str] = set()
+        self._unsubs: list[CALLBACK_TYPE] = []
+
+    async def async_start(self, switch_entity: str | None) -> None:
+        if not switch_entity:
+            return
+        self._switch_entity = switch_entity
+        self._unsubs.append(
+            async_track_state_change_event(
+                self.hass, [switch_entity], self._on_switch_change
+            )
+        )
+        self._unsubs.append(
+            async_track_state_change_event(
+                self.hass, [EXTERNAL_PAUSE_BOOLEAN], self._on_boolean_change
+            )
+        )
+        # Initial alignment: if the boolean exists and disagrees with the
+        # switch, push the boolean's state onto the switch. The boolean has
+        # been the canonical pause source until now, so on first install we
+        # adopt whatever state it's already in.
+        bool_state = self.hass.states.get(EXTERNAL_PAUSE_BOOLEAN)
+        sw_state = self.hass.states.get(switch_entity)
+        if bool_state and bool_state.state in ("on", "off") and sw_state and sw_state.state != bool_state.state:
+            await self._mirror_to_switch(bool_state.state)
+
+    async def async_stop(self) -> None:
+        for u in self._unsubs:
+            u()
+        self._unsubs.clear()
+
+    @callback
+    def _on_switch_change(self, event: Event[EventStateChangedData]) -> None:
+        if event.context.id in self._own_context_ids:
+            self._own_context_ids.discard(event.context.id)
+            return
+        new = event.data.get("new_state")
+        old = event.data.get("old_state")
+        if not new or not old or new.state == old.state or new.state not in ("on", "off"):
+            return
+        if not self.hass.states.get(EXTERNAL_PAUSE_BOOLEAN):
+            return
+        self.hass.async_create_task(self._mirror_to_boolean(new.state))
+
+    @callback
+    def _on_boolean_change(self, event: Event[EventStateChangedData]) -> None:
+        if event.context.id in self._own_context_ids:
+            self._own_context_ids.discard(event.context.id)
+            return
+        new = event.data.get("new_state")
+        old = event.data.get("old_state")
+        if not new or not old or new.state == old.state or new.state not in ("on", "off"):
+            return
+        if not self._switch_entity or not self.hass.states.get(self._switch_entity):
+            return
+        self.hass.async_create_task(self._mirror_to_switch(new.state))
+
+    async def _mirror_to_switch(self, state: str) -> None:
+        ctx = Context()
+        self._own_context_ids.add(ctx.id)
+        await self.hass.services.async_call(
+            "switch",
+            "turn_on" if state == "on" else "turn_off",
+            {"entity_id": self._switch_entity},
+            blocking=False,
+            context=ctx,
+        )
+
+    async def _mirror_to_boolean(self, state: str) -> None:
+        ctx = Context()
+        self._own_context_ids.add(ctx.id)
+        await self.hass.services.async_call(
+            "input_boolean",
+            "turn_on" if state == "on" else "turn_off",
+            {"entity_id": EXTERNAL_PAUSE_BOOLEAN},
+            blocking=False,
+            context=ctx,
+        )
 
 
 def _hhmm_to_min(value: object) -> int:
