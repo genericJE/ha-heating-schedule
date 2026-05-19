@@ -30,13 +30,26 @@
       "summary": {
         "title": "Add the cards to your dashboard",
         "description": "Setup is ready. Add the card as a Lovelace resource (Settings → Dashboards → Resources):\n\n- URL `/heating_schedule/heating-window-slider-card.js`\n- Type *JavaScript module*\n\nThen paste this YAML into a sections-style view:\n\n```yaml\n{dashboard_yaml}\n```\n\nClick **Submit** to finish."
+      },
+      "add_room": {
+        "title": "Add a room",
+        "description": "Your install already has {existing_count} room(s). Fill in this one to add it to the existing Heating Schedule. After submitting, the integration reloads and the new room's entities + card snippet become available.",
+        "data": {
+          "name": "Room name",
+          "climate_entity": "Climate entity (target)",
+          "current_temp_entity": "Current temperature sensor (optional)",
+          "window_entity": "Window open binary sensor (optional)",
+          "comfort_default": "Initial comfort temperature",
+          "window_count": "Number of heating windows"
+        }
       }
     },
     "error": {
       "name_required": "Please enter a room name."
     },
     "abort": {
-      "already_configured": "Heating Schedule is already configured."
+      "already_configured": "Heating Schedule is already configured.",
+      "room_added": "Room added. Heating Schedule is reloading — the new room's entities and card will appear in a moment."
     }
   },
   "entity": {

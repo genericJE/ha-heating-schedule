@@ -1,13 +1,17 @@
 """Config flow for Heating Schedule.
 
-Walks the user through:
+First-time setup walks the user through:
   1. user     - how many rooms (1..N)
   2. room     - looped once per room: name + climate + optional sensors + comfort + windows
   3. globals  - optional pause boolean + setback temperature
   4. summary  - shows the pasteable dashboard YAML, finishing creates the entry
 
+When an entry already exists, the "Add entry" button reuses the same flow
+but skips straight to `async_step_add_room` — a one-shot variant of the
+per-room step that appends to the existing entry and reloads it.
+
 The walked state lives in self._draft until the final step calls
-async_create_entry.
+async_create_entry (first run) or async_update_entry (add-room run).
 """
 
 from __future__ import annotations
@@ -22,6 +26,7 @@ from homeassistant.config_entries import ConfigFlow, ConfigFlowResult
 from homeassistant.helpers import selector
 from homeassistant.util import slugify
 
+from ._windows import initial_windows_json
 from .const import (
     CONF_CLIMATE_ENTITY,
     CONF_COMFORT_DEFAULT,
@@ -41,8 +46,6 @@ from .const import (
     DOMAIN,
     MAX_WINDOWS,
 )
-
-from ._windows import initial_windows_json
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -78,6 +81,11 @@ class HeatingScheduleConfigFlow(ConfigFlow, domain=DOMAIN):
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
+        # "Add entry" on an integration that already has an entry should add
+        # one room to that entry, not start a parallel multi-room setup.
+        if self._async_current_entries():
+            return await self.async_step_add_room()
+
         if user_input is not None:
             self._room_count = int(user_input[CONF_ROOM_COUNT])
             self._current_room_index = 0
@@ -232,8 +240,103 @@ class HeatingScheduleConfigFlow(ConfigFlow, domain=DOMAIN):
             },
         )
 
+    # ── add-room: append a single room to an existing entry ──────────────
+
+    async def async_step_add_room(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        entry = self._async_current_entries()[0]
+        existing_rooms: list[Mapping[str, Any]] = entry.data.get(CONF_ROOMS, [])
+        taken_slugs = [r[CONF_SLUG] for r in existing_rooms]
+        suggested_name, suggested_base = _suggest_unused_room(taken_slugs)
+
+        errors: dict[str, str] = {}
+        if user_input is not None:
+            name = user_input[CONF_NAME].strip()
+            if not name:
+                errors[CONF_NAME] = "name_required"
+            else:
+                slug = _unique_slug(name, taken_slugs)
+                count = int(user_input.get(CONF_WINDOW_COUNT, 1))
+                new_room = {
+                    CONF_SLUG: slug,
+                    CONF_NAME: name,
+                    CONF_CLIMATE_ENTITY: user_input[CONF_CLIMATE_ENTITY],
+                    CONF_CURRENT_TEMP_ENTITY: user_input.get(CONF_CURRENT_TEMP_ENTITY)
+                    or None,
+                    CONF_WINDOW_ENTITY: user_input.get(CONF_WINDOW_ENTITY) or None,
+                    CONF_COMFORT_DEFAULT: float(user_input[CONF_COMFORT_DEFAULT]),
+                    CONF_WINDOWS_DEFAULT: initial_windows_json(
+                        count, suggested_base
+                    ),
+                }
+                new_data = dict(entry.data)
+                new_data[CONF_ROOMS] = [*existing_rooms, new_room]
+                self.hass.config_entries.async_update_entry(entry, data=new_data)
+                # async_update_entry fires the update listener wired in
+                # __init__.py, which reloads the entry — that's what spins up
+                # the new room's entities. Aborting here is the standard
+                # "extend an existing entry" pattern.
+                return self.async_abort(reason="room_added")
+
+        schema = vol.Schema(
+            {
+                vol.Required(CONF_NAME, default=suggested_name): str,
+                vol.Required(CONF_CLIMATE_ENTITY): selector.EntitySelector(
+                    selector.EntitySelectorConfig(domain="climate")
+                ),
+                vol.Optional(CONF_CURRENT_TEMP_ENTITY): selector.EntitySelector(
+                    selector.EntitySelectorConfig(domain="sensor")
+                ),
+                vol.Optional(CONF_WINDOW_ENTITY): selector.EntitySelector(
+                    selector.EntitySelectorConfig(domain="binary_sensor")
+                ),
+                vol.Required(
+                    CONF_COMFORT_DEFAULT, default=DEFAULT_COMFORT
+                ): selector.NumberSelector(
+                    selector.NumberSelectorConfig(
+                        min=DEFAULT_COMFORT_MIN,
+                        max=DEFAULT_COMFORT_MAX,
+                        step=DEFAULT_COMFORT_STEP,
+                        unit_of_measurement="°C",
+                        mode=selector.NumberSelectorMode.BOX,
+                    )
+                ),
+                vol.Required(
+                    CONF_WINDOW_COUNT, default=1
+                ): selector.NumberSelector(
+                    selector.NumberSelectorConfig(
+                        min=1,
+                        max=MAX_WINDOWS,
+                        step=1,
+                        mode=selector.NumberSelectorMode.SLIDER,
+                    )
+                ),
+            }
+        )
+        return self.async_show_form(
+            step_id="add_room",
+            data_schema=schema,
+            errors=errors,
+            description_placeholders={
+                "existing_count": str(len(existing_rooms)),
+            },
+        )
+
 
 # ── helpers ────────────────────────────────────────────────────────────────
+
+
+def _suggest_unused_room(taken: list[str]) -> tuple[str, tuple[str, str]]:
+    """Pick the first suggested room whose slug isn't already taken.
+
+    Falls back to the first suggestion if every preset name is already
+    in use — the user can rename it before submitting.
+    """
+    for name, base in _SUGGESTED_ROOMS:
+        if slugify(name) not in taken:
+            return name, base
+    return _SUGGESTED_ROOMS[0]
 
 
 def _unique_slug(name: str, taken: list[str]) -> str:
