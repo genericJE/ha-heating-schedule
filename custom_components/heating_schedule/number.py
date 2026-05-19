@@ -65,7 +65,6 @@ class HeatingComfortNumber(HeatingScheduleRoomEntity, NumberEntity, RestoreEntit
     ) -> None:
         super().__init__(entry, slug, room_name)
         self._attr_unique_id = f"{entry.entry_id}_{slug}_comfort"
-        self._attr_suggested_object_id = f"heating_schedule_comfort_{slug}"
         self._attr_native_value = _clamp(initial_value)
 
     async def async_added_to_hass(self) -> None:

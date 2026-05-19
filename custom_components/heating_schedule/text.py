@@ -47,7 +47,13 @@ async def async_setup_entry(
 
 
 class HeatingWindowsText(HeatingScheduleRoomEntity, TextEntity, RestoreEntity):
-    """JSON-encoded list of heating windows for a room."""
+    """JSON-encoded list of heating windows for a room.
+
+    Entity ID is text.<room_slug>_windows (HA derives it from the device
+    name and the translation key). Schedule controller resolves it via the
+    entity registry by unique_id, so the device-derived slug doesn't have
+    to match the slug in entry.data.
+    """
 
     _attr_translation_key = "windows"
     _attr_mode = TextMode.TEXT
@@ -64,7 +70,6 @@ class HeatingWindowsText(HeatingScheduleRoomEntity, TextEntity, RestoreEntity):
     ) -> None:
         super().__init__(entry, slug, room_name)
         self._attr_unique_id = f"{entry.entry_id}_{slug}_windows"
-        self._attr_suggested_object_id = f"heating_schedule_windows_{slug}"
         self._attr_native_value = _validated_or_default(initial_json)
 
     async def async_added_to_hass(self) -> None:

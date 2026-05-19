@@ -271,7 +271,12 @@ def _is_hhmm(value: object) -> bool:
 
 
 def _dashboard_snippet(rooms: list[Mapping[str, Any]]) -> str:
-    """Build a pasteable Lovelace YAML block for the configured rooms."""
+    """Build a pasteable Lovelace YAML block for the configured rooms.
+
+    Entity IDs follow HA's default for has_entity_name=True devices:
+    {domain}.{device_slug}_{translation_key}, where device_slug is the
+    slugified room name.
+    """
     lines: list[str] = ["type: grid", "column_span: 2", "cards:"]
     lines.append("  - type: heading")
     lines.append("    heading: Schedule")
@@ -281,8 +286,8 @@ def _dashboard_snippet(rooms: list[Mapping[str, Any]]) -> str:
         slug = room[CONF_SLUG]
         lines.append("  - type: custom:heating-window-slider-card")
         lines.append(f"    name: {room[CONF_NAME]}")
-        lines.append(f"    windows_entity: text.heating_schedule_windows_{slug}")
-        lines.append(f"    comfort_entity: number.heating_schedule_comfort_{slug}")
+        lines.append(f"    windows_entity: text.{slug}_windows")
+        lines.append(f"    comfort_entity: number.{slug}_comfort")
         lines.append(f"    climate_entity: {room[CONF_CLIMATE_ENTITY]}")
         if room.get(CONF_CURRENT_TEMP_ENTITY):
             lines.append(
