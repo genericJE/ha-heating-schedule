@@ -1,28 +1,43 @@
 /**
  * heating-window-slider-card
  *
- * Lovelace card: dual-handle 24h range slider that drives two input_datetime
- * helpers (start, end) plus an input_number comfort-temperature spinner.
+ * Lovelace card: multi-window per-room heating schedule.
+ *
+ * Each card shows one or more (1..4) heating windows on a shared 24h track,
+ * a target-temperature spinner for that room's comfort temp, an active /
+ * inactive badge for whether the current time falls inside any window,
+ * the current room temperature, and a window open/closed indicator.
+ *
+ * Storage: a single input_text per room holding a JSON list of
+ * [["HH:MM","HH:MM"], ...] window pairs. The last entry may wrap midnight
+ * (end < start).
  *
  * Config:
  *   type: custom:heating-window-slider-card
- *   name: Bedroom                       # optional, displayed in header
- *   start_entity: input_datetime.x      # required, time-only
- *   end_entity: input_datetime.y        # required, time-only
- *   comfort_entity: input_number.z      # required, comfort temperature
- *   climate_entity: climate.bedroom_heating       # optional, hvac action in subtitle
- *   current_temp_entity: sensor.temp_sensor_temperature  # optional, current room temp
- *   window_entity: binary_sensor.window_sensor_opening   # optional, open/closed icon
- *   step_minutes: 5                     # optional, slider granularity (default 5)
+ *   name: Bedroom                              # optional
+ *   windows_entity: input_text.x               # required, JSON array of HH:MM pairs
+ *   comfort_entity: input_number.y             # required
+ *   climate_entity: climate.bedroom_heating    # optional, drives subtitle + heating tint
+ *   current_temp_entity: sensor.bedroom_temp   # optional
+ *   window_entity: binary_sensor.bedroom_open  # optional
+ *   step_minutes: 5                            # optional, default 5
  *
- * Visual: horizontal track 00:00→24:00, hour ticks every 6h, two draggable
- * handles, coloured fill between them (wraps midnight when start > end).
- * A thin vertical "now" marker tracks the wall clock. Header has a +/-
- * target-temperature spinner bound to comfort_entity.
+ * Drag rules:
+ *   - Each handle is clamped between its cyclic neighbours (going clockwise
+ *     and counter-clockwise around the 24h circle). Equal values are allowed.
+ *   - When two adjacent handles meet, neither can pass the other.
+ *   - The schedule is re-canonicalised after each commit (windows sorted by
+ *     start). A window with end < start renders as a wrap arc — drawn from
+ *     start to 24:00 plus 0:00 to end. The slider visually constrains drags
+ *     to the valid arc, so wrap state is reachable through ordinary drags
+ *     (no special "wrap" toggle).
  */
 
 const CARD_TAG = 'heating-window-slider-card';
 const DEFAULT_STEP = 5;
+const MIN_WINDOWS = 1;
+const MAX_WINDOWS = 4;
+const DAY = 1440;
 
 const css = `
   :host { display: block; }
@@ -107,7 +122,6 @@ const css = `
     color: var(--state-icon-color, var(--secondary-text-color));
     opacity: 0.6;
     transition: background 0.15s, color 0.15s, opacity 0.15s;
-    cursor: default;
   }
   .window-icon.open {
     background: rgba(0,188,212,0.25);
@@ -146,19 +160,32 @@ const css = `
     color: var(--primary-text-color);
     user-select: none;
   }
-  .time-row {
+  .windows-bar {
     display: flex;
-    justify-content: space-between;
-    font-variant-numeric: tabular-nums;
-    font-size: 0.95rem;
-    color: var(--primary-text-color);
-  }
-  .time-row .label {
-    font-size: 0.72rem;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 6px;
     color: var(--secondary-text-color);
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
+    font-size: 0.78rem;
+    font-variant-numeric: tabular-nums;
+    user-select: none;
   }
+  .windows-bar .count { padding: 0 6px; }
+  .windows-bar button {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    border: 0;
+    background: var(--secondary-background-color, rgba(127,127,127,0.15));
+    color: var(--primary-text-color);
+    font-size: 1rem;
+    line-height: 24px;
+    padding: 0;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .windows-bar button:hover:not(:disabled) { background: rgba(127,127,127,0.28); }
+  .windows-bar button:disabled { opacity: 0.4; cursor: not-allowed; }
   .slider-wrap {
     position: relative;
     height: 42px;
@@ -251,24 +278,26 @@ const css = `
 `;
 
 const pad2 = (n) => String(n).padStart(2, '0');
-const minutesToHHMMSS = (m) => {
-  m = ((m % 1440) + 1440) % 1440;
-  return `${pad2(Math.floor(m / 60))}:${pad2(m % 60)}:00`;
+const minToHHMM = (m) => {
+  const v = ((Math.round(m) % DAY) + DAY) % DAY;
+  return `${pad2(Math.floor(v / 60))}:${pad2(v % 60)}`;
 };
-const parseToMinutes = (hhmmss) => {
-  if (!hhmmss || typeof hhmmss !== 'string') return 0;
-  const [h, m] = hhmmss.split(':');
+const minToHHMMSS = (m) => `${minToHHMM(m)}:00`;
+const hhmmToMin = (s) => {
+  if (!s || typeof s !== 'string') return 0;
+  const [h, m] = s.split(':');
   return (parseInt(h, 10) || 0) * 60 + (parseInt(m, 10) || 0);
-};
-const minutesToLabel = (m) => {
-  m = ((Math.round(m) % 1440) + 1440) % 1440;
-  return `${pad2(Math.floor(m / 60))}:${pad2(m % 60)}`;
 };
 const formatTemp = (v, step) => {
   const n = Number(v);
   if (!Number.isFinite(n)) return '--';
   const dp = (step && step < 1) ? 1 : 0;
   return `${n.toFixed(dp)} °C`;
+};
+const inWindow = (s, e, n) => {
+  if (s === e) return false;
+  if (s < e) return n >= s && n < e;
+  return n >= s || n < e;
 };
 
 class HeatingWindowSliderCard extends HTMLElement {
@@ -277,17 +306,18 @@ class HeatingWindowSliderCard extends HTMLElement {
     this.attachShadow({ mode: 'open' });
     this._hass = null;
     this._config = null;
-    this._dragging = null;
-    this._dragMinutes = null;
     this._rendered = false;
     this._nowTimer = null;
     this._resizeObs = null;
     this._optimisticComfort = null;
+    this._optimisticWindows = null;     // [{start, end}] override during/just after drag
+    this._dragging = null;              // {windowIdx, handle}
+    this._dragValue = null;             // current dragged minute value
   }
 
   setConfig(config) {
-    if (!config.start_entity || !config.end_entity) {
-      throw new Error('start_entity and end_entity are required');
+    if (!config.windows_entity) {
+      throw new Error('windows_entity is required');
     }
     this._config = config;
     this._render();
@@ -303,7 +333,7 @@ class HeatingWindowSliderCard extends HTMLElement {
 
   connectedCallback() {
     this._nowTimer = setInterval(() => this._updateNowMark(), 30 * 1000);
-    if (this._els && 'ResizeObserver' in window) {
+    if (this._els && 'ResizeObserver' in window && !this._resizeObs) {
       this._resizeObs = new ResizeObserver(() => this._safeUpdate());
       this._resizeObs.observe(this._els.wrap);
     }
@@ -315,9 +345,7 @@ class HeatingWindowSliderCard extends HTMLElement {
   }
 
   _safeUpdate() {
-    // Render synchronously so updates land even when the tab is in the
-    // background (rAF is throttled/paused for hidden tabs).
-    try { this._update(); } catch (e) { /* render errors are non-fatal */ }
+    try { this._update(); } catch (e) { /* non-fatal render error */ }
   }
 
   _render() {
@@ -343,21 +371,16 @@ class HeatingWindowSliderCard extends HTMLElement {
           <button class="inc" type="button" aria-label="Increase">+</button>
         </div>
       </div>
-      <div class="time-row">
-        <div><div class="label">Start</div><div class="start-val">--:--</div></div>
-        <div style="text-align:right"><div class="label">End</div><div class="end-val">--:--</div></div>
+      <div class="windows-bar">
+        <span class="count">1 window</span>
+        <button class="btn-remove" type="button" aria-label="Remove last window">−</button>
+        <button class="btn-add" type="button" aria-label="Add window">+</button>
       </div>
       <div class="slider-wrap">
         <div class="track"></div>
-        <div class="fill"></div>
-        <div class="fill fill2" style="display:none"></div>
+        <div class="fills"></div>
         <div class="now-mark"></div>
-        <div class="handle handle-start">
-          <div class="tooltip tooltip-start">--:--</div>
-        </div>
-        <div class="handle handle-end">
-          <div class="tooltip tooltip-end">--:--</div>
-        </div>
+        <div class="handles"></div>
         <div class="ticks">
           <span style="left:0%">0</span>
           <span style="left:25%">6</span>
@@ -380,22 +403,19 @@ class HeatingWindowSliderCard extends HTMLElement {
       btnInc: card.querySelector('.inc'),
       btnDec: card.querySelector('.dec'),
       spinVal: card.querySelector('.value'),
-      startVal: card.querySelector('.start-val'),
-      endVal: card.querySelector('.end-val'),
+      countLabel: card.querySelector('.windows-bar .count'),
+      btnAdd: card.querySelector('.btn-add'),
+      btnRemove: card.querySelector('.btn-remove'),
       wrap: card.querySelector('.slider-wrap'),
-      fill: card.querySelector('.fill'),
-      fill2: card.querySelector('.fill2'),
+      fills: card.querySelector('.fills'),
+      handles: card.querySelector('.handles'),
       nowMark: card.querySelector('.now-mark'),
-      hStart: card.querySelector('.handle-start'),
-      hEnd: card.querySelector('.handle-end'),
-      tipStart: card.querySelector('.tooltip-start'),
-      tipEnd: card.querySelector('.tooltip-end'),
     };
 
-    this._els.hStart.addEventListener('pointerdown', (e) => this._startDrag(e, 'start'));
-    this._els.hEnd.addEventListener('pointerdown', (e) => this._startDrag(e, 'end'));
     this._els.btnInc.addEventListener('click', () => this._adjustComfort(+1));
     this._els.btnDec.addEventListener('click', () => this._adjustComfort(-1));
+    this._els.btnAdd.addEventListener('click', () => this._addWindow());
+    this._els.btnRemove.addEventListener('click', () => this._removeLastWindow());
 
     if (this.isConnected && 'ResizeObserver' in window && !this._resizeObs) {
       this._resizeObs = new ResizeObserver(() => this._safeUpdate());
@@ -405,146 +425,131 @@ class HeatingWindowSliderCard extends HTMLElement {
     this._rendered = true;
   }
 
-  _update() {
-    if (!this._rendered || !this._hass || !this._config) return;
-    const startMin = this._currentStartMin();
-    const endMin = this._currentEndMin();
-    const comfort = this._currentComfort();
-    const climate = this._config.climate_entity
-      ? this._hass.states[this._config.climate_entity] : null;
-    const inWindow = this._inWindow(startMin, endMin, this._nowMinutes());
+  // ── Window state helpers ──────────────────────────────────────────────
 
-    this._els.name.textContent = this._config.name || this._friendly(this._config.start_entity) || 'Heating window';
-
-    // Subtitle: current room temperature + optional hvac action.
-    const tempState = this._config.current_temp_entity
-      ? this._hass.states[this._config.current_temp_entity] : null;
-    let subtitleParts = [];
-    if (tempState && tempState.state != null && !['unavailable','unknown','none',''].includes(tempState.state)) {
-      const v = Number(tempState.state);
-      if (Number.isFinite(v)) subtitleParts.push(`${v.toFixed(1)} °C`);
+  _readWindows() {
+    if (this._optimisticWindows) return this._optimisticWindows;
+    const eid = this._config.windows_entity;
+    if (!eid || !this._hass) return [];
+    const s = this._hass.states[eid];
+    if (!s || ['unavailable','unknown'].includes(s.state)) return [];
+    try {
+      const parsed = JSON.parse(s.state);
+      if (!Array.isArray(parsed)) return [];
+      return parsed
+        .filter(w => Array.isArray(w) && w.length === 2)
+        .slice(0, MAX_WINDOWS)
+        .map(([a, b]) => ({ start: hhmmToMin(a), end: hhmmToMin(b) }));
+    } catch (e) {
+      return [];
     }
-    if (climate && climate.attributes && climate.attributes.hvac_action) {
-      subtitleParts.push(climate.attributes.hvac_action);
-    }
-    this._els.subtitle.textContent = subtitleParts.join(' · ');
-    this._els.subtitle.style.display = subtitleParts.length ? '' : 'none';
+  }
 
-    // Climate icon tint reflects hvac_action.
-    const heating = climate && climate.attributes && climate.attributes.hvac_action === 'heating';
-    this._els.climateIcon.classList.toggle('heating', !!heating);
+  _writeWindows(windows) {
+    const eid = this._config.windows_entity;
+    if (!eid || !this._hass) return;
+    const value = JSON.stringify(windows.map(w => [minToHHMM(w.start), minToHHMM(w.end)]));
+    this._optimisticWindows = windows;
+    this._safeUpdate();
+    this._hass.callService('input_text', 'set_value', { entity_id: eid, value })
+      .then(() => { this._optimisticWindows = null; })
+      .catch(() => { this._optimisticWindows = null; this._safeUpdate(); });
+  }
 
-    // Badge: active/inactive
-    this._els.badge.textContent = inWindow ? 'active' : 'inactive';
-    this._els.badge.classList.toggle('active', inWindow);
+  // Sort windows by start ascending. If there is a wrap window (end < start),
+  // it ends up last because its start is necessarily ≥ any non-wrap start
+  // (otherwise it would overlap a sibling).
+  _canonicalise(windows) {
+    return windows
+      .map(w => ({ start: w.start, end: w.end }))
+      .sort((a, b) => a.start - b.start);
+  }
 
-    // Window icon: open → cyan + open icon, closed → muted + closed icon.
-    const winState = this._config.window_entity
-      ? this._hass.states[this._config.window_entity] : null;
-    if (winState && ['on','off'].includes(winState.state)) {
-      const open = winState.state === 'on';
-      this._els.windowIcon.icon = open
-        ? 'mdi:window-open-variant'
-        : 'mdi:window-closed-variant';
-      this._els.windowIcon.classList.toggle('open', open);
-      this._els.windowIcon.title = open ? 'Window open' : 'Window closed';
-      this._els.windowIcon.style.display = '';
+  // ── Drag and clamp ────────────────────────────────────────────────────
+
+  // For the handle being dragged, return its cyclic neighbours among all
+  // OTHER handles' positions. The valid drag arc is [prev, next] going
+  // clockwise around the 24h circle (both endpoints inclusive).
+  _cyclicNeighbours(windowIdx, handle) {
+    const windows = this._readWindows();
+    const others = [];
+    windows.forEach((w, i) => {
+      if (!(i === windowIdx && handle === 'start')) others.push(w.start);
+      if (!(i === windowIdx && handle === 'end')) others.push(w.end);
+    });
+    if (others.length === 0) return { prev: 0, next: 0, free: true };
+    const p = handle === 'start' ? windows[windowIdx].start : windows[windowIdx].end;
+    // prev: largest position ≤ p, falling back to max of all (wrap)
+    const leq = others.filter(o => o <= p);
+    const geq = others.filter(o => o >= p);
+    const prev = leq.length ? Math.max(...leq) : Math.max(...others);
+    const next = geq.length ? Math.min(...geq) : Math.min(...others);
+    return { prev, next, free: false };
+  }
+
+  _arcContains(prev, next, value) {
+    if (prev === next) return true;        // full circle, single point excluded but equal ok
+    if (prev < next) return value >= prev && value <= next;
+    return value >= prev || value <= next; // wraps midnight
+  }
+
+  _clampToArc(prev, next, value) {
+    if (this._arcContains(prev, next, value)) return value;
+    const cwDist = (a, b) => ((b - a + DAY) % DAY);   // clockwise from a to b
+    const dPrev = Math.min(cwDist(prev, value), cwDist(value, prev));
+    const dNext = Math.min(cwDist(next, value), cwDist(value, next));
+    return dPrev <= dNext ? prev : next;
+  }
+
+  // ── + / − buttons ─────────────────────────────────────────────────────
+
+  _addWindow() {
+    const windows = this._readWindows();
+    if (windows.length >= MAX_WINDOWS) return;
+    const step = this._config.step_minutes || DEFAULT_STEP;
+    let best = { size: 0, gapStart: 0 };
+    if (windows.length === 0) {
+      best = { size: DAY, gapStart: 0 };
     } else {
-      this._els.windowIcon.style.display = 'none';
+      // Walk windows in canonical order; the gap is from one window's end
+      // to the next window's start, going clockwise (wraps for the last pair).
+      const sorted = this._canonicalise(windows);
+      for (let i = 0; i < sorted.length; i++) {
+        const w = sorted[i];
+        const nextW = sorted[(i + 1) % sorted.length];
+        const size = ((nextW.start - w.end + DAY) % DAY) || DAY;
+        if (size > best.size) best = { size, gapStart: w.end };
+      }
     }
-
-    // Spinner: comfort temp
-    const comfortState = this._comfortState();
-    const step = comfortState ? parseFloat(comfortState.attributes.step) || 0.5 : 0.5;
-    const min = comfortState ? parseFloat(comfortState.attributes.min) : 5;
-    const max = comfortState ? parseFloat(comfortState.attributes.max) : 30;
-    this._els.spinVal.textContent = formatTemp(comfort, step);
-    this._els.btnDec.disabled = !comfortState || !(comfort > min + 1e-6);
-    this._els.btnInc.disabled = !comfortState || !(comfort < max - 1e-6);
-    this._els.spinner.style.display = this._config.comfort_entity ? '' : 'none';
-
-    this._renderValues(startMin, endMin);
-    this._updateNowMark();
+    // New window spans the middle 50% of the largest gap, but >= 30 min wide.
+    let width = Math.max(30, Math.round(best.size / 2 / step) * step);
+    width = Math.min(width, best.size - step);
+    if (width < step) width = step;
+    const startOffset = Math.round((best.size - width) / 2 / step) * step;
+    let start = (best.gapStart + startOffset) % DAY;
+    let end = (start + width) % DAY;
+    const next = this._canonicalise([...windows, { start, end }]);
+    this._writeWindows(next);
   }
 
-  _renderValues(startMin, endMin) {
-    const w = this._els.wrap.clientWidth;
-    const pctS = (startMin / 1440) * 100;
-    const pctE = (endMin / 1440) * 100;
-    this._els.hStart.style.left = pctS + '%';
-    this._els.hEnd.style.left = pctE + '%';
-    this._els.startVal.textContent = minutesToLabel(startMin);
-    this._els.endVal.textContent = minutesToLabel(endMin);
-    this._els.tipStart.textContent = minutesToLabel(startMin);
-    this._els.tipEnd.textContent = minutesToLabel(endMin);
-
-    if (startMin === endMin) {
-      this._els.fill.style.left = pctS + '%';
-      this._els.fill.style.width = '0%';
-      this._els.fill2.style.display = 'none';
-    } else if (startMin < endMin) {
-      this._els.fill.style.left = pctS + '%';
-      this._els.fill.style.width = (pctE - pctS) + '%';
-      this._els.fill2.style.display = 'none';
-    } else {
-      this._els.fill.style.left = pctS + '%';
-      this._els.fill.style.width = (100 - pctS) + '%';
-      this._els.fill2.style.display = '';
-      this._els.fill2.style.left = '0%';
-      this._els.fill2.style.width = pctE + '%';
-    }
-    // If width was 0 (laid out hidden), the ResizeObserver will re-trigger
-    // when the card becomes visible — no recursion needed.
-    void w;
+  _removeLastWindow() {
+    const windows = this._readWindows();
+    if (windows.length <= MIN_WINDOWS) return;
+    const next = windows.slice(0, -1);
+    this._writeWindows(next);
   }
 
-  _updateNowMark() {
-    if (!this._els) return;
-    const pct = (this._nowMinutes() / 1440) * 100;
-    this._els.nowMark.style.left = `calc(${pct}% - 1px)`;
-  }
+  // ── Drag handlers ─────────────────────────────────────────────────────
 
-  _currentStartMin() {
-    if (this._dragging === 'start' && this._dragMinutes != null) return this._dragMinutes;
-    return parseToMinutes(this._stateOf(this._config.start_entity));
-  }
-  _currentEndMin() {
-    if (this._dragging === 'end' && this._dragMinutes != null) return this._dragMinutes;
-    return parseToMinutes(this._stateOf(this._config.end_entity));
-  }
-  _currentComfort() {
-    if (this._optimisticComfort != null) return this._optimisticComfort;
-    const s = this._comfortState();
-    return s ? Number(s.state) : NaN;
-  }
-  _comfortState() {
-    const eid = this._config.comfort_entity;
-    if (!eid || !this._hass) return null;
-    return this._hass.states[eid] || null;
-  }
-  _stateOf(eid) {
-    const s = this._hass && this._hass.states && this._hass.states[eid];
-    return s ? s.state : '';
-  }
-  _friendly(eid) {
-    const s = this._hass && this._hass.states && this._hass.states[eid];
-    return s && s.attributes && s.attributes.friendly_name;
-  }
-  _nowMinutes() {
-    const d = new Date();
-    return d.getHours() * 60 + d.getMinutes();
-  }
-  _inWindow(s, e, n) {
-    if (s === e) return false;
-    if (s < e) return n >= s && n < e;
-    return n >= s || n < e;
-  }
-
-  _startDrag(ev, which) {
+  _startDrag(ev, windowIdx, handle) {
     ev.preventDefault();
-    this._dragging = which;
-    this._dragMinutes = which === 'start' ? this._currentStartMin() : this._currentEndMin();
-    (which === 'start' ? this._els.hStart : this._els.hEnd).classList.add('dragging');
+    ev.stopPropagation();
+    const w = this._readWindows()[windowIdx];
+    if (!w) return;
+    this._dragging = { windowIdx, handle };
+    this._dragValue = handle === 'start' ? w.start : w.end;
+    const handleEl = ev.currentTarget;
+    handleEl.classList.add('dragging');
     this._move = (e) => this._onMove(e);
     this._up = (e) => this._endDrag(e);
     window.addEventListener('pointermove', this._move);
@@ -559,28 +564,35 @@ class HeatingWindowSliderCard extends HTMLElement {
     let pct = (ev.clientX - rect.left) / rect.width;
     pct = Math.max(0, Math.min(1, pct));
     const step = this._config.step_minutes || DEFAULT_STEP;
-    let mins = Math.round((pct * 1440) / step) * step;
-    if (mins >= 1440) mins = 1440 - step;
-    this._dragMinutes = mins;
+    let proposed = Math.round((pct * DAY) / step) * step;
+    if (proposed >= DAY) proposed = DAY - step;
+    const { prev, next } = this._cyclicNeighbours(this._dragging.windowIdx, this._dragging.handle);
+    proposed = this._clampToArc(prev, next, proposed);
+    // Apply optimistic update — mutate the windows array for live render.
+    const windows = this._readWindows().map((w, i) => {
+      if (i !== this._dragging.windowIdx) return { ...w };
+      return this._dragging.handle === 'start'
+        ? { start: proposed, end: w.end }
+        : { start: w.start, end: proposed };
+    });
+    this._optimisticWindows = windows;
+    this._dragValue = proposed;
     this._safeUpdate();
   }
 
   _endDrag(ev) {
     if (!this._dragging) return;
-    const which = this._dragging;
-    const mins = this._dragMinutes;
+    const { windowIdx, handle } = this._dragging;
+    const value = this._dragValue;
     this._dragging = null;
-    this._dragMinutes = null;
+    this._dragValue = null;
     this._unbindPointer();
-    this._els.hStart.classList.remove('dragging');
-    this._els.hEnd.classList.remove('dragging');
-    const eid = which === 'start' ? this._config.start_entity : this._config.end_entity;
-    if (this._hass && Number.isFinite(mins)) {
-      this._hass.callService('input_datetime', 'set_datetime', {
-        entity_id: eid,
-        time: minutesToHHMMSS(mins),
-      }).catch(() => {});
-    }
+    this._els.handles.querySelectorAll('.handle.dragging').forEach(h => h.classList.remove('dragging'));
+    // Commit: rebuild windows from current optimistic + canonicalise + write.
+    const live = this._readWindows();
+    const next = this._canonicalise(live);
+    this._optimisticWindows = next;
+    this._writeWindows(next);
   }
 
   _unbindPointer() {
@@ -593,6 +605,18 @@ class HeatingWindowSliderCard extends HTMLElement {
     this._up = null;
   }
 
+  // ── Comfort spinner ───────────────────────────────────────────────────
+
+  _comfortState() {
+    const eid = this._config.comfort_entity;
+    if (!eid || !this._hass) return null;
+    return this._hass.states[eid] || null;
+  }
+  _currentComfort() {
+    if (this._optimisticComfort != null) return this._optimisticComfort;
+    const s = this._comfortState();
+    return s ? Number(s.state) : NaN;
+  }
   _adjustComfort(direction) {
     const s = this._comfortState();
     const eid = this._config.comfort_entity;
@@ -603,30 +627,155 @@ class HeatingWindowSliderCard extends HTMLElement {
     const cur = this._currentComfort();
     if (!Number.isFinite(cur)) return;
     let next = cur + direction * step;
-    // Round to step grid to avoid float drift across many clicks.
     next = Math.round(next / step) * step;
     if (Number.isFinite(min)) next = Math.max(min, next);
     if (Number.isFinite(max)) next = Math.min(max, next);
     if (Math.abs(next - cur) < 1e-9) return;
     this._optimisticComfort = next;
     this._safeUpdate();
-    this._hass.callService('input_number', 'set_value', {
-      entity_id: eid,
-      value: next,
-    }).then(() => {
-      this._optimisticComfort = null;
-    }).catch(() => {
-      this._optimisticComfort = null;
-      this._safeUpdate();
+    this._hass.callService('input_number', 'set_value', { entity_id: eid, value: next })
+      .then(() => { this._optimisticComfort = null; })
+      .catch(() => { this._optimisticComfort = null; this._safeUpdate(); });
+  }
+
+  // ── Render ────────────────────────────────────────────────────────────
+
+  _nowMinutes() {
+    const d = new Date();
+    return d.getHours() * 60 + d.getMinutes();
+  }
+
+  _update() {
+    if (!this._rendered || !this._hass || !this._config) return;
+    const windows = this._readWindows();
+    const now = this._nowMinutes();
+    const anyActive = windows.some(w => inWindow(w.start, w.end, now));
+    const climate = this._config.climate_entity ? this._hass.states[this._config.climate_entity] : null;
+
+    this._els.name.textContent = this._config.name || (this._hass.states[this._config.windows_entity]?.attributes?.friendly_name) || 'Heating schedule';
+
+    const tempState = this._config.current_temp_entity ? this._hass.states[this._config.current_temp_entity] : null;
+    const subtitleParts = [];
+    if (tempState && !['unavailable','unknown','none',''].includes(tempState.state)) {
+      const v = Number(tempState.state);
+      if (Number.isFinite(v)) subtitleParts.push(`${v.toFixed(1)} °C`);
+    }
+    if (climate?.attributes?.hvac_action) subtitleParts.push(climate.attributes.hvac_action);
+    this._els.subtitle.textContent = subtitleParts.join(' · ');
+    this._els.subtitle.style.display = subtitleParts.length ? '' : 'none';
+
+    const heating = climate?.attributes?.hvac_action === 'heating';
+    this._els.climateIcon.classList.toggle('heating', !!heating);
+
+    this._els.badge.textContent = anyActive ? 'active' : 'inactive';
+    this._els.badge.classList.toggle('active', anyActive);
+
+    const winState = this._config.window_entity ? this._hass.states[this._config.window_entity] : null;
+    if (winState && ['on','off'].includes(winState.state)) {
+      const open = winState.state === 'on';
+      this._els.windowIcon.icon = open ? 'mdi:window-open-variant' : 'mdi:window-closed-variant';
+      this._els.windowIcon.classList.toggle('open', open);
+      this._els.windowIcon.title = open ? 'Window open' : 'Window closed';
+      this._els.windowIcon.style.display = '';
+    } else {
+      this._els.windowIcon.style.display = 'none';
+    }
+
+    const comfort = this._currentComfort();
+    const comfortState = this._comfortState();
+    const step = comfortState ? parseFloat(comfortState.attributes.step) || 0.5 : 0.5;
+    const min = comfortState ? parseFloat(comfortState.attributes.min) : 5;
+    const max = comfortState ? parseFloat(comfortState.attributes.max) : 30;
+    this._els.spinVal.textContent = formatTemp(comfort, step);
+    this._els.btnDec.disabled = !comfortState || !(comfort > min + 1e-6);
+    this._els.btnInc.disabled = !comfortState || !(comfort < max - 1e-6);
+    this._els.spinner.style.display = this._config.comfort_entity ? '' : 'none';
+
+    this._els.countLabel.textContent = `${windows.length} window${windows.length === 1 ? '' : 's'}`;
+    this._els.btnAdd.disabled = windows.length >= MAX_WINDOWS;
+    this._els.btnRemove.disabled = windows.length <= MIN_WINDOWS;
+
+    this._renderWindows(windows);
+    this._updateNowMark();
+  }
+
+  _renderWindows(windows) {
+    // Fills.
+    while (this._els.fills.firstChild) this._els.fills.removeChild(this._els.fills.firstChild);
+    windows.forEach(w => {
+      const pctS = (w.start / DAY) * 100;
+      const pctE = (w.end / DAY) * 100;
+      if (w.start === w.end) {
+        // zero-width: skip
+        return;
+      } else if (w.start < w.end) {
+        const f = document.createElement('div');
+        f.className = 'fill';
+        f.style.left = pctS + '%';
+        f.style.width = (pctE - pctS) + '%';
+        this._els.fills.appendChild(f);
+      } else {
+        const f1 = document.createElement('div');
+        f1.className = 'fill';
+        f1.style.left = pctS + '%';
+        f1.style.width = (100 - pctS) + '%';
+        this._els.fills.appendChild(f1);
+        const f2 = document.createElement('div');
+        f2.className = 'fill';
+        f2.style.left = '0%';
+        f2.style.width = pctE + '%';
+        this._els.fills.appendChild(f2);
+      }
     });
+    // Handles. Rebuild if window count changed; otherwise reuse existing.
+    const wanted = windows.length * 2;
+    const existing = this._els.handles.children.length;
+    if (existing !== wanted) {
+      while (this._els.handles.firstChild) this._els.handles.removeChild(this._els.handles.firstChild);
+      windows.forEach((_, i) => {
+        ['start', 'end'].forEach(role => {
+          const h = document.createElement('div');
+          h.className = 'handle';
+          h.dataset.windowIdx = String(i);
+          h.dataset.role = role;
+          const tip = document.createElement('div');
+          tip.className = 'tooltip';
+          tip.textContent = '--:--';
+          h.appendChild(tip);
+          h.addEventListener('pointerdown', (ev) => this._startDrag(ev, i, role));
+          this._els.handles.appendChild(h);
+        });
+      });
+    }
+    // Position handles + tooltip text.
+    const handleEls = Array.from(this._els.handles.children);
+    windows.forEach((w, i) => {
+      ['start', 'end'].forEach((role, j) => {
+        const el = handleEls[i * 2 + j];
+        if (!el) return;
+        const pos = role === 'start' ? w.start : w.end;
+        el.style.left = `${(pos / DAY) * 100}%`;
+        el.dataset.windowIdx = String(i);
+        el.dataset.role = role;
+        const tip = el.querySelector('.tooltip');
+        if (tip) tip.textContent = minToHHMM(pos);
+      });
+    });
+  }
+
+  _updateNowMark() {
+    if (!this._els) return;
+    const pct = (this._nowMinutes() / DAY) * 100;
+    this._els.nowMark.style.left = `calc(${pct}% - 1px)`;
   }
 
   static getStubConfig() {
     return {
-      start_entity: 'input_datetime.heating_window_bedroom_start',
-      end_entity: 'input_datetime.heating_window_bedroom_end',
+      windows_entity: 'input_text.heating_windows_bedroom',
       comfort_entity: 'input_number.heating_comfort_bedroom',
       climate_entity: 'climate.bedroom_heating',
+      current_temp_entity: 'sensor.bedroom_temperature',
+      window_entity: 'binary_sensor.bedroom_window',
       name: 'Bedroom',
     };
   }
@@ -638,7 +787,7 @@ if (!customElements.get(CARD_TAG)) {
   window.customCards.push({
     type: CARD_TAG,
     name: 'Heating Window Slider',
-    description: 'Dual-handle 24h range slider for a room heating window.',
+    description: 'Per-room multi-window heating schedule with cyclic-clamped drag handles.',
     preview: false,
   });
 }

@@ -4,23 +4,25 @@
 
 [![HACS](https://img.shields.io/badge/HACS-Custom-orange.svg)](https://hacs.xyz)
 
-A per-room heating schedule for Home Assistant. Each room gets a card with a 24-hour dual-handle slider for its heating window, a target-temperature spinner, the current room temperature, and a window open/closed indicator. A single automation enforces the schedule against `climate` entities (designed for Better Thermostat, works against any climate that accepts `set_temperature`).
+A per-room heating schedule for Home Assistant. Each room gets a card with a 24-hour shared track that holds **1 to 4 heating windows**, a target-temperature spinner, the current room temperature, and a window open/closed indicator. A single automation enforces the schedule against `climate` entities (designed for Better Thermostat, works against any climate that accepts `set_temperature`).
 
 ![Two schedule cards: Kitchen (active, window open) and Bedroom (inactive)](docs/schedule.png)
 
 ## What it gives you
 
-- **Per-room time windows** with a dual-handle range slider. Drag start and end on a 24-hour track; the window wraps around midnight when start is after end (e.g. 22:00 → 07:00 for a bedroom).
-- **Per-room comfort temperature** via a `+/–` spinner — the room heats to this value inside the window.
-- **Setback outside the window** — `14 °C` (Vaillant Frostschutz), hard-coded in the automation. Change it to taste.
-- **Active / inactive badge** showing whether the current time is inside the window.
+- **1–4 windows per room** on a single 24h track. Add / remove via `+` and `−` buttons.
+- **Dual-handle range slider per window**. Drag start and end; cyclic neighbour constraint prevents handles from passing one another (equal values are allowed for smooth touching).
+- **Wrap-around for the last window**: if its end is earlier than its start (e.g. `22:00 → 07:00`), it renders as two fills (start→24:00 and 00:00→end). Wrap is reachable through ordinary drags — no special toggle.
+- **Per-room comfort temperature** via a `+/–` spinner. The room heats to this value whenever any window is active.
+- **Setback outside all windows**: 14 °C (Vaillant Frostschutz), hard-coded in the automation. Change it to taste.
+- **Active / inactive badge** — whether the current time falls inside any window for that room.
 - **Current room temperature** in the subtitle, from a sensor you wire up.
 - **Window open/closed icon** mirroring the colour theme of HA's tile cards (cyan when open).
 - **`heating_paused` aware** — yields to the existing pause/resume flow with a 5 s delay so the schedule re-asserts after the snapshot restore, not against it.
 
 ## Requirements
 
-- Home Assistant 2024.x or later (the card uses `ha-icon` and the automation uses the modern `triggers:` / `actions:` keys).
+- Home Assistant 2024.x or later (the card uses `ha-icon` and the automation uses the modern `triggers:` / `actions:` keys, plus the `from_json` filter).
 - One `climate` entity per room. Tested with [Better Thermostat](https://github.com/KartoffelToby/better_thermostat) wrapping Zigbee TRVs.
 - Optional but recommended: per-room temperature sensor and window-opening binary sensor.
 
@@ -44,16 +46,19 @@ A per-room heating schedule for Home Assistant. Each room gets a card with a 24-
 
 ### 2. Helpers
 
-Merge the contents of [`examples/helpers.yaml`](examples/helpers.yaml) into your `configuration.yaml` (or wherever you keep `input_datetime:` and `input_number:` blocks). Then:
+Merge the contents of [`examples/helpers.yaml`](examples/helpers.yaml) into your `configuration.yaml` (or wherever you keep `input_text:` and `input_number:` blocks). Then:
 
-- Developer Tools → Services → `input_datetime.reload`
+- Developer Tools → Services → `input_text.reload`
 - Developer Tools → Services → `input_number.reload`
 
-The defaults are sensible for a 4-room flat: bedroom heats at night (22:00 → 07:00), other rooms heat during the day. Comfort defaults are 20 °C / 21 °C for the bedroom.
+Each room gets:
+
+- `input_text.heating_windows_<room>` — JSON array of `["HH:MM","HH:MM"]` window pairs. Defaults to one window with sensible day/night times.
+- `input_number.heating_comfort_<room>` — comfort target (5–30 °C, step 0.5). Defaults to 20 °C (21 °C for the bedroom).
 
 ### 3. The automation
 
-Copy [`examples/automation.yaml`](examples/automation.yaml) into your `automations.yaml`. Edit the room list inside the action's `variables.rooms` template and the per-room `trigger.id` blocks to match your installation if your room slugs differ from `kitchen`, `bedroom`, `bathroom`, `living_room`.
+Copy [`examples/automation.yaml`](examples/automation.yaml) into your `automations.yaml`. The action's `variables.rooms` list and the per-room state triggers hard-code `kitchen`, `bedroom`, `bathroom`, `living_room`. Adapt to your installation's room slugs if they differ.
 
 Then: Developer Tools → Services → `automation.reload`.
 
@@ -65,11 +70,10 @@ Add the cards from [`examples/dashboard.yaml`](examples/dashboard.yaml) to a sec
 
 ```yaml
 type: custom:heating-window-slider-card
-name: Bedroom                              # optional, defaults to start_entity friendly name
-start_entity: input_datetime.x             # required, time-only input_datetime
-end_entity: input_datetime.y               # required, time-only input_datetime
-comfort_entity: input_number.z             # required, comfort temperature
-climate_entity: climate.bedroom_heating    # optional, shown in subtitle (hvac_action) and badge
+name: Bedroom                              # optional, defaults to entity friendly name
+windows_entity: input_text.x               # required, JSON array of HH:MM pairs
+comfort_entity: input_number.y             # required, comfort temperature
+climate_entity: climate.bedroom_heating    # optional, drives subtitle + heating tint
 current_temp_entity: sensor.bedroom_temp   # optional, current room temp in subtitle
 window_entity: binary_sensor.bedroom_open  # optional, open/closed icon (cyan when open)
 step_minutes: 5                            # optional, slider snap (default 5)
@@ -77,29 +81,31 @@ step_minutes: 5                            # optional, slider snap (default 5)
 
 ## How the schedule logic works
 
-The automation is **edge-triggered**: it writes a climate target only when something changes that should change the target.
+The automation runs every minute (`time_pattern: '/1'`) and also fires on:
 
-Triggers per room:
+- state change of any `input_text.heating_windows_<room>` (slider drag, add/remove window)
+- state change of any `input_number.heating_comfort_<room>` (spinner click)
+- `input_boolean.heating_paused` off→on transitions (with a 5 s settle delay)
+- `homeassistant.start`
 
-- Window **start** time arrives → in window → write comfort temp
-- Window **end** time arrives → out of window → write setback (14 °C)
-- The room's `input_datetime` or `input_number` helper state changes (slider drag, spinner click) → re-evaluate immediately
-
-Plus two global triggers:
-
-- `homeassistant.start` → evaluate all 4 rooms after a 5 s settle delay
-- `input_boolean.heating_paused` goes off → evaluate all 4 rooms after a 5 s settle delay (lets `Resume Heating on Return` finish its scene restore first)
-
-Window-membership math (handles the wrap-around):
+For each room it parses the JSON window list and checks whether **any** window contains the current time. The window-membership math (with wrap):
 
 ```
-in_window = (start < end  and start ≤ now < end)
-         or (start > end  and (now ≥ start or now < end))
+in_window = (s < e  and s ≤ n < e)
+         or (s > e  and (n ≥ s or n < e))
 ```
 
-`start == end` is treated as "never heat" (zero-width window).
+If yes → write `comfort_<room>` to the climate target. If no → write `14 °C` (setback).
 
-Each room's write is guarded by `current_target ≠ desired`, so the automation is idempotent — re-evaluations that match the current target are no-ops and won't churn the TRV.
+Each write is guarded by `current_target ≠ desired`, so re-evaluations that match are no-ops and the TRV doesn't churn.
+
+## Drag rules
+
+- Each handle is clamped between its **cyclic neighbours** on the 24h circle (immediate prev / next handle clockwise).
+- **Equal values are allowed** — two handles can touch but not pass.
+- After every drag the schedule is **canonicalised** (sorted by start). If a drag causes a window to "wrap", the window ends up last in the list with `end < start`, and the slider renders both fill segments automatically. There's no separate wrap mode toggle.
+- The `+` button finds the largest gap **between adjacent windows** and inserts a new window in the middle of it.
+- The `−` button removes the latest (last-started) window. Min 1, max 4.
 
 ## Integration with `heating_paused` / `Resume Heating`
 
@@ -112,14 +118,15 @@ This automation includes a 5 s delay on the "all rooms" branch (triggered by `he
 
 If a user manually un-pauses (without Resume firing, e.g. by tapping the Pause button), the schedule simply writes comfort/setback after the 5 s delay — no scene needed.
 
-**Semantics**: pre-pause manual climate-target overrides do not survive across a pause. The schedule wins on resume. If you'd rather have manual overrides persist, remove the `heating_paused` state trigger from the automation; the next window edge will reassert the schedule anyway.
+**Semantics**: pre-pause manual climate-target overrides do not survive across a pause. The schedule wins on resume. If you'd rather have manual overrides persist, remove the `heating_paused` state trigger from the automation; the schedule will reassert on the next tick or helper change anyway.
 
 ## Customisation
 
-- **Comfort temperature**: it's a per-room `input_number`. Adjust via the spinner or directly in the helper.
+- **Comfort temperature**: per-room `input_number`. Adjust via the spinner or directly in the helper.
 - **Setback temperature**: hard-coded as `14` in the automation's `variables.setback`. Change it there.
-- **Slider step**: pass `step_minutes: 15` (or other) on the card to coarsen the granularity. Defaults to 5.
-- **Comfort defaults per room**: in `helpers.yaml`, the `initial:` keys set the value used the first time the helper loads.
+- **Slider step**: pass `step_minutes: 15` (or other) on the card to coarsen the granularity. Default is 5.
+- **Comfort defaults per room**: in `helpers.yaml`, the `initial:` keys set the value used the first time a helper loads.
+- **Default windows**: also via `initial:` in `helpers.yaml`. The card and automation will follow.
 
 ## Not in scope
 

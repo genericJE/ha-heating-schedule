@@ -3,60 +3,36 @@
 # !include if you keep helpers in a separate file).
 #
 # After editing, reload them without a full HA restart:
-#   - service: input_datetime.reload
+#   - service: input_text.reload
 #   - service: input_number.reload
 
-input_datetime:
-  heating_window_kitchen_start:
-    name: Kitchen heating start
-    has_date: false
-    has_time: true
-    initial: '07:00'
-    icon: mdi:weather-sunset-up
-  heating_window_kitchen_end:
-    name: Kitchen heating end
-    has_date: false
-    has_time: true
-    initial: '22:00'
-    icon: mdi:weather-sunset-down
-  heating_window_bedroom_start:
-    name: Bedroom heating start
-    has_date: false
-    has_time: true
-    initial: '22:00'
-    icon: mdi:weather-sunset-up
-  heating_window_bedroom_end:
-    name: Bedroom heating end
-    has_date: false
-    has_time: true
-    initial: '07:00'
-    icon: mdi:weather-sunset-down
-  heating_window_bathroom_start:
-    name: Bathroom heating start
-    has_date: false
-    has_time: true
-    initial: '07:00'
-    icon: mdi:weather-sunset-up
-  heating_window_bathroom_end:
-    name: Bathroom heating end
-    has_date: false
-    has_time: true
-    initial: '22:00'
-    icon: mdi:weather-sunset-down
-  heating_window_living_room_start:
-    name: Living Room heating start
-    has_date: false
-    has_time: true
-    initial: '07:00'
-    icon: mdi:weather-sunset-up
-  heating_window_living_room_end:
-    name: Living Room heating end
-    has_date: false
-    has_time: true
-    initial: '23:00'
-    icon: mdi:weather-sunset-down
+input_text:
+  # Per-room heating schedule. Each entity holds a JSON array of windows where
+  # each window is ["HH:MM","HH:MM"]. 1-4 windows allowed. The card and the
+  # Apply heating schedule automation read/write this. The last window in the
+  # list may wrap midnight (end < start).
+  heating_windows_kitchen:
+    name: Kitchen heating windows
+    initial: '[["07:00","22:00"]]'
+    max: 255
+  heating_windows_bedroom:
+    name: Bedroom heating windows
+    initial: '[["22:00","07:00"]]'
+    max: 255
+  heating_windows_bathroom:
+    name: Bathroom heating windows
+    initial: '[["07:00","22:00"]]'
+    max: 255
+  heating_windows_living_room:
+    name: Living Room heating windows
+    initial: '[["07:00","23:00"]]'
+    max: 255
 
 input_number:
+  # Per-room comfort temperature. The window slider card's +/− spinner writes
+  # these; the Apply heating schedule automation pushes the value to
+  # climate.<room>_heating while at least one window is active, and drops to
+  # 14 °C (Frostschutz) otherwise.
   heating_comfort_kitchen:
     name: Kitchen comfort temperature
     min: 5

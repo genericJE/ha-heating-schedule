@@ -1,71 +1,38 @@
 - id: '1779950000000'
   alias: Apply heating schedule per room
-  description: 'Edge-triggered per-room heating schedule. For each room, sets climate.<room>_heating
-    target to input_number.heating_comfort_<room> inside the window and 14°C (Frostschutz)
-    outside. Wrap-around: start > end means the window spans midnight (e.g. 22:00→07:00);
-    start == end is treated as "never heat" (zero-width window). heating_paused overrides
-    everything — when on, the Apply Heating Pause automation already drives all rooms
-    to 14°C, so this automation no-ops. Triggers per-room on each window edge time,
-    on state change of the room''s start/end/comfort helpers (so adjusting a slider
-    or the comfort spinner snaps immediately), plus heating_paused off-transition
-    and homeassistant.start for full re-eval. Between edges, manual user overrides
-    on the climate tile persist until the next transition. Idempotent write guard
-    avoids no-op set_temperature calls. Interaction with Resume Heating on Return:
-    when heating_paused goes off, Resume Heating restores pre-pause climate targets
-    from scene.heating_pause_snapshot (then optional Hc1DayTemp fallback after a 3 s
-    settle). To avoid racing those writes, the "all rooms" branch of this automation
-    delays 5 s before evaluating — Resume''s scene + fallback land first, then we
-    re-assert the schedule on top. Net effect: brief flicker (pre-pause values → 1 s
-    → schedule values) instead of TRV flap. If Resume did not run (manual heating_paused
-    toggle), the delay is still safe — there is no scene to restore, so we just write
-    desired targets after 5 s.'
+  description: 'Per-room heating schedule. For each room, reads its window list from
+    input_text.heating_windows_<room> (JSON: [["HH:MM","HH:MM"], ...]). When the current
+    time is inside any window, climate.<room>_heating target is set to input_number.heating_comfort_<room>;
+    otherwise it drops to 14°C (Frostschutz). The last window in the list may wrap
+    midnight (end < start). heating_paused overrides — Apply Heating Pause already
+    drives all rooms to 14°C during a pause, so this automation no-ops. Triggers:
+    every minute (time_pattern) as the safety net for arbitrary window edges; state
+    changes on the per-room input_text + input_number.heating_comfort_* (instant re-eval
+    on slider drag or spinner click); heating_paused off-transition (5 s delay so
+    Resume Heating''s scene restore lands first); homeassistant.start. Idempotent
+    write guard skips no-op set_temperature calls.'
   triggers:
-  - trigger: time
-    at: input_datetime.heating_window_kitchen_start
-    id: kitchen
-  - trigger: time
-    at: input_datetime.heating_window_kitchen_end
-    id: kitchen
+  - trigger: time_pattern
+    minutes: /1
+    id: tick
   - trigger: state
     entity_id:
-    - input_datetime.heating_window_kitchen_start
-    - input_datetime.heating_window_kitchen_end
+    - input_text.heating_windows_kitchen
     - input_number.heating_comfort_kitchen
     id: kitchen
-  - trigger: time
-    at: input_datetime.heating_window_bedroom_start
-    id: bedroom
-  - trigger: time
-    at: input_datetime.heating_window_bedroom_end
-    id: bedroom
   - trigger: state
     entity_id:
-    - input_datetime.heating_window_bedroom_start
-    - input_datetime.heating_window_bedroom_end
+    - input_text.heating_windows_bedroom
     - input_number.heating_comfort_bedroom
     id: bedroom
-  - trigger: time
-    at: input_datetime.heating_window_bathroom_start
-    id: bathroom
-  - trigger: time
-    at: input_datetime.heating_window_bathroom_end
-    id: bathroom
   - trigger: state
     entity_id:
-    - input_datetime.heating_window_bathroom_start
-    - input_datetime.heating_window_bathroom_end
+    - input_text.heating_windows_bathroom
     - input_number.heating_comfort_bathroom
     id: bathroom
-  - trigger: time
-    at: input_datetime.heating_window_living_room_start
-    id: living_room
-  - trigger: time
-    at: input_datetime.heating_window_living_room_end
-    id: living_room
   - trigger: state
     entity_id:
-    - input_datetime.heating_window_living_room_start
-    - input_datetime.heating_window_living_room_end
+    - input_text.heating_windows_living_room
     - input_number.heating_comfort_living_room
     id: living_room
   - trigger: state
@@ -80,19 +47,17 @@
   actions:
   - variables:
       setback: 14
-      rooms: "{% set all_rooms = ['kitchen','bedroom','bathroom','living_room'] %}{%
-        set tid = trigger.id | default(none) %}{% if tid in all_rooms %}{{ [tid]
-        }}{% else %}{{ all_rooms }}{% endif %}"
-  # When the trigger is 'all' (HA start, manual trigger, or heating_paused off→on),
-  # wait 5 s so any concurrent Resume Heating on Return finishes its
-  # scene.turn_on + 3 s settle + Hc1DayTemp fallback before we re-assert the
-  # schedule. Without this, our writes race with the snapshot restore and the
-  # TRVs flap. Per-room triggers (slider drag, spinner click, edge time) bypass
-  # the delay so they stay snappy.
+      rooms:
+      - kitchen
+      - bedroom
+      - bathroom
+      - living_room
+  # 5 s settle when the trigger is heating_paused off→on or HA start (trigger.id
+  # == 'all') — lets Resume Heating's scene.turn_on + Hc1DayTemp fallback land
+  # before we re-assert. Per-room state triggers and the periodic tick bypass.
   - if:
     - condition: template
-      value_template: "{{ (trigger.id | default(none)) not in ['kitchen','bedroom','bathroom','living_room']
-        }}"
+      value_template: "{{ (trigger.id | default('')) == 'all' }}"
     then:
     - delay:
         seconds: 5
@@ -102,19 +67,18 @@
       - variables:
           room: '{{ repeat.item }}'
           paused: '{{ is_state("input_boolean.heating_paused", "on") }}'
-          start_t: '{{ states("input_datetime.heating_window_" ~ room ~ "_start") }}'
-          end_t: '{{ states("input_datetime.heating_window_" ~ room ~ "_end") }}'
-          now_t: '{{ now().strftime("%H:%M:%S") }}'
           comfort: '{{ states("input_number.heating_comfort_" ~ room) | float(20)
             }}'
-          s: '{% set p = start_t.split(":") %}{{ p[0]|int*3600 + p[1]|int*60 + p[2]|int
-            }}'
-          e: '{% set p = end_t.split(":") %}{{ p[0]|int*3600 + p[1]|int*60 + p[2]|int
-            }}'
-          n: '{% set p = now_t.split(":") %}{{ p[0]|int*3600 + p[1]|int*60 + p[2]|int
-            }}'
-          in_window: '{% set s = s|int %}{% set e = e|int %}{% set n = n|int %}{{
-            ((s < e) and (s <= n < e)) or ((s > e) and (n >= s or n < e)) }}'
+          n: '{% set p = now().strftime("%H:%M").split(":") %}{{ p[0] | int * 60
+            + p[1] | int }}'
+          in_window: "{% set raw = states('input_text.heating_windows_' ~ room) %}{%
+            set windows = (raw | from_json) if (raw not in ['unavailable','unknown','',
+            'None']) else [] %}{% set ns = namespace(hit=false) %}{% set nn = n |
+            int %}{% for w in windows %}{% set sp = w[0].split(':') %}{% set ep =
+            w[1].split(':') %}{% set s = sp[0] | int * 60 + sp[1] | int %}{% set
+            e = ep[0] | int * 60 + ep[1] | int %}{% if (s < e and s <= nn < e) or
+            (s > e and (nn >= s or nn < e)) %}{% set ns.hit = true %}{% endif %}{%
+            endfor %}{{ ns.hit }}"
           desired: '{{ (comfort if in_window | bool else setback) | float }}'
           target_entity: 'climate.{{ room }}_heating'
           current_target: '{{ state_attr(target_entity, "temperature") }}'

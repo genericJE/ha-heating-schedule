@@ -2,7 +2,8 @@
 # view (the cards expect to live inside a grid section). Adjust the per-room
 # entity IDs to match your installation:
 #
-#   start_entity / end_entity       — the input_datetime helpers from helpers.yaml
+#   windows_entity                  — the input_text helper from helpers.yaml
+#                                     (JSON array of [start, end] HH:MM pairs)
 #   comfort_entity                  — the input_number helper from helpers.yaml
 #   climate_entity                  — your TRV climate entity (e.g. a Better Thermostat)
 #   current_temp_entity (optional)  — the room temp sensor shown in the subtitle
@@ -10,7 +11,7 @@
 #                                     for the open/closed icon
 #
 # Optional:
-#   name           — display name (defaults to start_entity friendly name)
+#   name           — display name
 #   step_minutes   — slider snap granularity (default 5)
 
 type: grid
@@ -23,8 +24,7 @@ cards:
 
   - type: custom:heating-window-slider-card
     name: Kitchen
-    start_entity: input_datetime.heating_window_kitchen_start
-    end_entity: input_datetime.heating_window_kitchen_end
+    windows_entity: input_text.heating_windows_kitchen
     comfort_entity: input_number.heating_comfort_kitchen
     climate_entity: climate.kitchen_heating
     current_temp_entity: sensor.kitchen_temperature
@@ -35,8 +35,7 @@ cards:
 
   - type: custom:heating-window-slider-card
     name: Bedroom
-    start_entity: input_datetime.heating_window_bedroom_start
-    end_entity: input_datetime.heating_window_bedroom_end
+    windows_entity: input_text.heating_windows_bedroom
     comfort_entity: input_number.heating_comfort_bedroom
     climate_entity: climate.bedroom_heating
     current_temp_entity: sensor.bedroom_temperature
@@ -47,8 +46,7 @@ cards:
 
   - type: custom:heating-window-slider-card
     name: Bathroom
-    start_entity: input_datetime.heating_window_bathroom_start
-    end_entity: input_datetime.heating_window_bathroom_end
+    windows_entity: input_text.heating_windows_bathroom
     comfort_entity: input_number.heating_comfort_bathroom
     climate_entity: climate.bathroom_heating
     current_temp_entity: sensor.bathroom_temperature
@@ -59,8 +57,7 @@ cards:
 
   - type: custom:heating-window-slider-card
     name: Living Room
-    start_entity: input_datetime.heating_window_living_room_start
-    end_entity: input_datetime.heating_window_living_room_end
+    windows_entity: input_text.heating_windows_living_room
     comfort_entity: input_number.heating_comfort_living_room
     climate_entity: climate.living_room_heating
     current_temp_entity: sensor.living_room_temperature
