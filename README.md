@@ -1,5 +1,7 @@
 # Heating Window Slider Card for Home Assistant
 
+<img src="docs/logo.svg" alt="" width="96" align="right">
+
 > **Personal project** — built for a specific Vaillant + Better Thermostat installation. The card and automation only depend on a `climate` entity that accepts `set_temperature`, so they work with any climate integration; the rest of the install is generic HA. Released as-is.
 
 [![HACS](https://img.shields.io/badge/HACS-Custom-orange.svg)](https://hacs.xyz)

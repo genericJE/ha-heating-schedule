@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256" role="img" aria-label="Heating Schedule logo: a radiator above a slider with two handles">
+  <!-- Radiator: top + bottom caps with 4 vertical fins -->
+  <g fill="#FF9800">
+    <rect x="32" y="40" width="192" height="14" rx="6"/>
+    <rect x="32" y="130" width="192" height="14" rx="6"/>
+    <rect x="51"  y="46" width="24" height="92" rx="10"/>
+    <rect x="94"  y="46" width="24" height="92" rx="10"/>
+    <rect x="137" y="46" width="24" height="92" rx="10"/>
+    <rect x="180" y="46" width="24" height="92" rx="10"/>
+  </g>
+
+  <!-- Slider track + active-window fill -->
+  <rect x="32" y="192" width="192" height="8" rx="4" fill="#D8D8D8"/>
+  <rect x="74" y="192" width="108" height="8" rx="4" fill="#FF9800"/>
+
+  <!-- Two handles, matching the card's white-fill + orange-ring + orange-dot style -->
+  <g>
+    <circle cx="74"  cy="196" r="16" fill="#FFFFFF" stroke="#FF9800" stroke-width="4"/>
+    <circle cx="74"  cy="196" r="7"  fill="#FF9800"/>
+    <circle cx="182" cy="196" r="16" fill="#FFFFFF" stroke="#FF9800" stroke-width="4"/>
+    <circle cx="182" cy="196" r="7"  fill="#FF9800"/>
+  </g>
+</svg>
