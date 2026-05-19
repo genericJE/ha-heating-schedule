@@ -755,9 +755,12 @@ const EDITOR_SCHEMA = [
   {
     // Synthetic field: not stored in the card config. The form populates it
     // from the current windows_entity state's JSON array length and writes
-    // a re-sized JSON back to the text entity on change.
+    // a re-sized JSON back to the text entity on change. Slider mode forces
+    // the value into [1..MAX_WINDOWS] visually so the user can't enter an
+    // out-of-range count (box mode leaves the input as plain text and HA
+    // doesn't pass min/max through as HTML attrs).
     name: 'window_count',
-    selector: { number: { min: 1, max: MAX_WINDOWS, step: 1, mode: 'box' } },
+    selector: { number: { min: 1, max: MAX_WINDOWS, step: 1, mode: 'slider' } },
   },
 ];
 
