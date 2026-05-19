@@ -1,9 +1,9 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256" role="img" aria-label="Heating Schedule logo: a radiator with rising heat squiggles, above a slider with two handles">
   <!-- Heat waves: three identical vertical squiggles evenly spaced above the radiator -->
   <g fill="none" stroke="#FF9800" stroke-width="6" stroke-linecap="round">
-    <path d="M84  64 q -10,-6 0,-12 t 0,-12 t 0,-12"/>
-    <path d="M128 64 q -10,-6 0,-12 t 0,-12 t 0,-12"/>
-    <path d="M172 64 q -10,-6 0,-12 t 0,-12 t 0,-12"/>
+    <path d="M84  60 q -10,-6 0,-12 t 0,-12 t 0,-12"/>
+    <path d="M128 60 q -10,-6 0,-12 t 0,-12 t 0,-12"/>
+    <path d="M172 60 q -10,-6 0,-12 t 0,-12 t 0,-12"/>
   </g>
 
   <!-- Radiator: solid rounded-top body with four pill-shaped fin cutouts, plus two stubby legs -->
@@ -22,8 +22,8 @@
     <!-- Body: rounded-top rectangle, flat sides + bottom; rx applies to top corners only because we draw it as a path -->
     <path d="M 32 94 Q 32 70 56 70 L 200 70 Q 224 70 224 94 L 224 188 L 32 188 Z" mask="url(#finCutouts)"/>
     <!-- Two stubby legs hanging below, aligned with the body's outer edges -->
-    <rect x="32"  y="188" width="24" height="20"/>
-    <rect x="200" y="188" width="24" height="20"/>
+    <rect x="32"  y="182" width="24" height="26" rx="6"/>
+    <rect x="200" y="182" width="24" height="26" rx="6"/>
   </g>
 
   <!-- Slider track + active-window fill -->
