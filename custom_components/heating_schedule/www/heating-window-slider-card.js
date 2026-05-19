@@ -64,16 +64,16 @@ const css = `
     width: 36px;
     height: 36px;
     border-radius: 50%;
-    /* Idle: yellow/active radiator. */
-    background: rgba(255,152,0,0.18);
-    color: var(--state-active-color, #ff9800);
+    /* Idle: blue radiator-disabled. */
+    background: rgba(33,150,243,0.22);
+    color: var(--state-climate-cool-color, #2196f3);
     opacity: 1;
     transition: background 0.15s, color 0.15s;
   }
   .climate-icon.heating {
-    /* Heating: blue radiator-disabled. */
-    background: rgba(33,150,243,0.22);
-    color: var(--state-climate-cool-color, #2196f3);
+    /* Heating: yellow/active radiator. */
+    background: rgba(255,152,0,0.18);
+    color: var(--state-active-color, #ff9800);
   }
   .name-block {
     flex: 1;
@@ -601,7 +601,7 @@ class HeatingWindowSliderCard extends HTMLElement {
     this._els.subtitle.style.display = subtitleParts.length ? '' : 'none';
 
     const heating = climate?.attributes?.hvac_action === 'heating';
-    this._els.climateIcon.icon = heating ? 'mdi:radiator-disabled' : 'mdi:radiator';
+    this._els.climateIcon.icon = heating ? 'mdi:radiator' : 'mdi:radiator-disabled';
     this._els.climateIcon.classList.toggle('heating', !!heating);
 
     this._els.badge.textContent = anyActive ? 'active' : 'inactive';
