@@ -770,6 +770,63 @@ const EDITOR_LABELS = {
 };
 
 const DEFAULT_WINDOW = ['07:00', '22:00'];
+const NEW_WINDOW_MIN_MINUTES = 60;
+
+// Pick a new window that fits in the largest cyclic gap between `existing`.
+// Existing entries are HH:MM tuples [start, end]; end < start denotes wrap.
+// Returns [startHHMM, endHHMM]. If `existing` is empty, returns DEFAULT_WINDOW.
+const placeNewWindow = (existing) => {
+  if (!existing.length) return [...DEFAULT_WINDOW];
+
+  // Decompose every window into linear minute spans on a 0..2880 timeline so
+  // a wrap window (end < start) becomes two contiguous spans that share
+  // boundaries with their non-wrap neighbours. We then find the largest gap
+  // between any two consecutive span boundaries.
+  const spans = [];
+  for (const [a, b] of existing) {
+    const s = _hhmmToMin(a);
+    const e = _hhmmToMin(b);
+    if (s === e) continue;
+    if (s < e) spans.push([s, e]);
+    else { spans.push([s, DAY]); spans.push([0, e]); }
+  }
+  spans.sort((p, q) => p[0] - q[0]);
+
+  // Cyclic gap: walk through the sorted spans tracking the gap from the
+  // previous span's end to this span's start. Treat the last->first gap as
+  // (DAY - last.end + first.start).
+  let bestGapStart = 0;
+  let bestGapSize = 0;
+  for (let i = 0; i < spans.length; i++) {
+    const prev = i === 0 ? [spans[spans.length - 1][0] - DAY, spans[spans.length - 1][1] - DAY] : spans[i - 1];
+    const gapStart = prev[1];
+    const gapSize = spans[i][0] - gapStart;
+    if (gapSize > bestGapSize) {
+      bestGapSize = gapSize;
+      bestGapStart = ((gapStart % DAY) + DAY) % DAY;
+    }
+  }
+
+  if (bestGapSize < NEW_WINDOW_MIN_MINUTES) {
+    // No room for a clean placement; collapse into a tiny token slot at the
+    // gap centre. Better to over-render than to silently no-op.
+    bestGapSize = Math.max(bestGapSize, 30);
+  }
+
+  const winSize = Math.min(NEW_WINDOW_MIN_MINUTES, Math.floor(bestGapSize / 2));
+  const startMin = ((bestGapStart + Math.floor((bestGapSize - winSize) / 2)) + DAY) % DAY;
+  const endMin = (startMin + winSize) % DAY;
+  return [_minToHHMM(startMin), _minToHHMM(endMin)];
+};
+
+const _hhmmToMin = (s) => {
+  const [h, m] = String(s).split(':');
+  return (parseInt(h, 10) || 0) * 60 + (parseInt(m, 10) || 0);
+};
+const _minToHHMM = (m) => {
+  const v = ((Math.round(m) % DAY) + DAY) % DAY;
+  return `${String(Math.floor(v / 60)).padStart(2, '0')}:${String(v % 60).padStart(2, '0')}`;
+};
 
 // windows_entity + comfort_entity aren't surfaced in the editor — the
 // integration's per-room device names them deterministically off the room
@@ -857,7 +914,10 @@ class HeatingWindowSliderCardEditor extends HTMLElement {
     if (windows.length > clamped) {
       windows = windows.slice(0, clamped);
     } else {
-      while (windows.length < clamped) windows.push([...DEFAULT_WINDOW]);
+      // Pick each new window from the largest cyclic gap so they don't all
+      // collapse onto the same default slot, which would look like a single
+      // window in the preview.
+      while (windows.length < clamped) windows.push(placeNewWindow(windows));
     }
     const domain = (eid.split('.')[0]) || 'text';
     await this._hass.callService(domain, 'set_value', { entity_id: eid, value: JSON.stringify(windows) });
