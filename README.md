@@ -105,7 +105,9 @@ Each write is guarded by `current_target ≠ desired`, so re-evaluations that ma
 
 ## Pause
 
-The integration creates one `switch.heating_schedule_pause`, owned and persisted by the integration. Toggle it from a dashboard tile, a service call, a Lovelace tap action, or any automation — the controller writes setback (default `14 °C`) to every configured climate and stops re-evaluating until you flip it back off. On flip-off, a 5 s settle delay lets any peer cleanup automations land before the schedule re-asserts.
+The integration creates one `switch.heating_schedule_pause`, owned and persisted by the integration. Toggle it from a dashboard tile, a service call, a Lovelace tap action, or any automation — the controller writes setback (default `14 °C`) to every configured climate and stops re-evaluating until you flip it back off. The setback push is intentionally delayed 2 s (`PAUSE_SNAPSHOT_DELAY_SECONDS`) so a peer `scene.create` triggered on the same edge captures pre-pause state first. On flip-off, a 5 s settle delay lets any peer cleanup automations land before the schedule re-asserts.
+
+While pause is on, each room's slider card renders in gray with a "disabled" badge (tooltip: "heating is paused") so the dashboard reflects the schedule's actual status.
 
 ### `input_boolean.heating_paused` as an entry point
 
@@ -122,7 +124,48 @@ icon: mdi:beach
 
 Tap once → boolean flips on → mirror flips the switch → integration pushes every room to setback. Anything else you've wired to the boolean (a scene snapshot, a heat-source flow-temp lowering automation, a leave-home notification, a vacation-mode cascade) keeps firing.
 
-**Semantics**: pre-pause manual climate-target overrides do not survive across a pause. The schedule wins on resume.
+### Using pause from automations
+
+The mirror means automations can target either side. Pick the one that fits the rest of your setup; the other follows automatically.
+
+**Pause + scheduled resume.** Combine the pause flip with an `input_datetime.heating_resume_at` so a separate "resume" automation can lift the pause later. Triggering an actionable mobile notification on `zone.leave_home` (asking for a return datetime) is a clean entry point.
+
+**Resume on a state change, not only on a clock.** A robust resume automation triggers on all of:
+
+- `time:` at `input_datetime.heating_resume_at` (the scheduled return)
+- `time_pattern:` `/5min` (catch-up if HA was down when the scheduled time fired)
+- `homeassistant: start` (catch-up after a restart)
+- **`state:` `input_boolean.heating_paused` from `on` to `off`** — fires when the user lifts pause manually from the dashboard, the switch tile, or another automation
+
+The first three need an `eta ≤ now` condition; the manual-unpause trigger should fire unconditionally. Without that fourth trigger, a manual unpause runs the integration's resume but skips whatever cascade you wanted (clearing related toggles, dismissing a notification, restoring a scene).
+
+**Snapshot scenes for restore-on-return.** If you want to remember pre-pause state and restore it on resume, snapshot a scene on the same `heating_paused: off→on` edge:
+
+```yaml
+- action: scene.create
+  data:
+    scene_id: heating_pause_snapshot
+    snapshot_entities:
+      - climate.kitchen_heating
+      - climate.bedroom_heating
+      # ...
+```
+
+The integration's 2 s pause-on setback delay is sized to let this snapshot land before climate targets are lowered.
+
+### Pitfalls
+
+Things that won't work the way you might expect.
+
+1. **Don't drive climate entities directly while paused.** The integration writes setback every minute (idempotently — but as soon as your value differs from setback, it rewrites). To run rooms warmer during a pause, edit `number.<room>_comfort` and lift the pause; the integration writes comfort immediately on resume.
+2. **Manual climate setpoints don't survive a pause cycle.** On resume, the integration re-evaluates from `text.<room>_windows` + `number.<room>_comfort` + the configured setback and overrides whatever the climate is set to. If you need pre-pause targets back, snapshot a `scene.heating_pause_snapshot` on the pause-on edge and restore it on resume.
+3. **Don't trigger your resume automation only on time-based conditions.** Without a `heating_paused: on→off` trigger, a user who lifts pause early via the switch or boolean will see heating come back but anything else gated on that automation (related toggles, robot/presence cascades, return-home notifications) will stay engaged until the original scheduled time arrives.
+4. **The schedule silently skips climates in `hvac_mode: off`.** A user-disabled climate is treated as authoritative; the integration won't bring it out of off. Set it back to `heat` (or your platform's equivalent) for the schedule to apply.
+5. **The schedule yields to Better Thermostat's window-open frost protect.** When a climate reports `attributes.window_open: true`, the integration skips its writes for that room and lets the underlying platform hold its frost target. Comfort writes resume automatically once the window closes.
+6. **Don't rename `input_boolean.heating_paused`.** The integration's mirror is hardcoded to that exact entity_id (`EXTERNAL_PAUSE_BOOLEAN` in `custom_components/heating_schedule/const.py`). Rename it and the sync silently breaks; edit the constant to match if you need a different name.
+7. **The integration's setback survives in `number.<room>_comfort`, not in a snapshot.** The setback temperature is per-config-entry (set in the wizard, default `14 °C`); the comfort target is per-room and editable from the card spinner. If you change a room's comfort while paused, the new value is what wins on resume — there's no "remember the comfort I had before the pause."
+
+**Tl;dr**: anything you want preserved across a pause goes in a scene snapshot; anything you want changed by the pause goes in the integration's own state; everything else stays out of the climate entities while pause is on.
 
 ### Legacy YAML install: `Apply Heating Pause` / `Resume Heating on Return`
 
