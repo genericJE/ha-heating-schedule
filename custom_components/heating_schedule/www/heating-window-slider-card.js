@@ -37,6 +37,7 @@
  */
 
 const CARD_TAG = 'heating-window-slider-card';
+const EDITOR_TAG = 'heating-window-slider-card-editor';
 const DEFAULT_STEP = 5;
 const MAX_WINDOWS = 4;
 const DAY = 1440;
@@ -712,6 +713,10 @@ class HeatingWindowSliderCard extends HTMLElement {
       name: 'Bedroom',
     };
   }
+
+  static getConfigElement() {
+    return document.createElement(EDITOR_TAG);
+  }
 }
 
 if (!customElements.get(CARD_TAG)) {
@@ -723,4 +728,107 @@ if (!customElements.get(CARD_TAG)) {
     description: 'Per-room multi-window heating schedule with cyclic-clamped drag handles.',
     preview: false,
   });
+}
+
+// ─── Visual editor ────────────────────────────────────────────────────────
+//
+// Renders inside Lovelace's "Edit card" dialog when the user opens the
+// gear icon. ha-form drives the layout from a JSON schema; we just keep
+// the form's data in sync with the card config and re-emit a config-changed
+// event whenever the user touches a field.
+
+const EDITOR_SCHEMA = [
+  { name: 'name', selector: { text: {} } },
+  {
+    name: 'windows_entity',
+    required: true,
+    selector: { entity: { domain: ['text', 'input_text'] } },
+  },
+  {
+    name: 'comfort_entity',
+    required: true,
+    selector: { entity: { domain: ['number', 'input_number'] } },
+  },
+  {
+    name: 'climate_entity',
+    selector: { entity: { domain: 'climate' } },
+  },
+  {
+    name: 'current_temp_entity',
+    selector: { entity: { domain: 'sensor' } },
+  },
+  {
+    name: 'window_entity',
+    selector: { entity: { domain: 'binary_sensor' } },
+  },
+  {
+    name: 'step_minutes',
+    selector: { number: { min: 1, max: 60, step: 1, mode: 'box', unit_of_measurement: 'min' } },
+  },
+];
+
+const EDITOR_LABELS = {
+  name: 'Name (optional, defaults to entity friendly name)',
+  windows_entity: 'Windows entity (text / input_text holding the JSON window list)',
+  comfort_entity: 'Comfort entity (number / input_number for the target temperature)',
+  climate_entity: 'Climate entity (optional, drives subtitle + heating tint)',
+  current_temp_entity: 'Current temperature sensor (optional)',
+  window_entity: 'Window open binary sensor (optional)',
+  step_minutes: `Slider step (default ${DEFAULT_STEP})`,
+};
+
+class HeatingWindowSliderCardEditor extends HTMLElement {
+  constructor() {
+    super();
+    this._config = {};
+    this._hass = null;
+    this._form = null;
+  }
+
+  setConfig(config) {
+    this._config = { ...config };
+    this._renderOrUpdate();
+  }
+
+  set hass(hass) {
+    this._hass = hass;
+    if (this._form) this._form.hass = hass;
+  }
+
+  connectedCallback() {
+    this._renderOrUpdate();
+  }
+
+  _renderOrUpdate() {
+    if (!this._form) {
+      const form = document.createElement('ha-form');
+      form.computeLabel = (s) => EDITOR_LABELS[s.name] || s.name;
+      form.addEventListener('value-changed', (e) => {
+        e.stopPropagation();
+        // ha-form sends the full updated object as e.detail.value. Preserve
+        // any keys outside the schema (notably `type`) by spreading on top
+        // of our previous config rather than replacing wholesale.
+        const next = { ...this._config, ...e.detail.value };
+        // Drop keys the user explicitly cleared, except `type`.
+        Object.keys(next).forEach((k) => {
+          if (k !== 'type' && (next[k] === undefined || next[k] === '')) delete next[k];
+        });
+        this._config = next;
+        this.dispatchEvent(new CustomEvent('config-changed', {
+          detail: { config: next },
+          bubbles: true,
+          composed: true,
+        }));
+      });
+      this.appendChild(form);
+      this._form = form;
+    }
+    this._form.schema = EDITOR_SCHEMA;
+    this._form.data = this._config;
+    if (this._hass) this._form.hass = this._hass;
+  }
+}
+
+if (!customElements.get(EDITOR_TAG)) {
+  customElements.define(EDITOR_TAG, HeatingWindowSliderCardEditor);
 }
