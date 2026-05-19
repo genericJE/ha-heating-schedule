@@ -8,13 +8,26 @@ number entity, card editor) produces the same non-overlapping defaults.
 from __future__ import annotations
 
 import json
-from typing import Iterable
+from collections.abc import Iterable
+
+from homeassistant.const import STATE_UNAVAILABLE, STATE_UNKNOWN
 
 from .const import MAX_WINDOWS
 
 DAY = 1440
 NEW_WINDOW_MIN_MINUTES = 60
 DEFAULT_WINDOW: list[str] = ["07:00", "22:00"]
+
+# States that mean "no usable value". Centralised so every reader matches
+# what HA actually emits (STATE_NONE is "none"; empty string is the rare
+# pre-restore window).
+UNUSABLE_STATES: frozenset[str] = frozenset(
+    {STATE_UNAVAILABLE, STATE_UNKNOWN, "none", ""}
+)
+
+
+def is_unusable(state: str | None) -> bool:
+    return state is None or state in UNUSABLE_STATES
 
 
 def hhmm_to_min(value: str) -> int:
@@ -27,8 +40,23 @@ def min_to_hhmm(value: int) -> str:
     return f"{v // 60:02d}:{v % 60:02d}"
 
 
+def is_hhmm(value: object) -> bool:
+    """Strict HH:MM validation: 5 chars, colon at index 2, hour 0-23, minute 0-59."""
+    if not isinstance(value, str) or len(value) != 5 or value[2] != ":":
+        return False
+    try:
+        h = int(value[:2])
+        m = int(value[3:])
+    except ValueError:
+        return False
+    return 0 <= h <= 23 and 0 <= m <= 59
+
+
 def parse_windows(raw: str | None) -> list[list[str]]:
-    """Return the JSON-encoded window list, filtered to valid [start, end] pairs."""
+    """Return the JSON-encoded window list, filtered to valid [start, end] pairs.
+
+    Each entry is two HH:MM-shaped strings. Format-invalid entries are dropped.
+    """
     if not raw:
         return []
     try:
@@ -37,11 +65,19 @@ def parse_windows(raw: str | None) -> list[list[str]]:
         return []
     if not isinstance(parsed, list):
         return []
-    out: list[list[str]] = []
-    for item in parsed:
-        if isinstance(item, list) and len(item) == 2 and all(isinstance(x, str) for x in item):
-            out.append([item[0], item[1]])
-    return out
+    return [
+        [item[0], item[1]]
+        for item in parsed
+        if isinstance(item, list)
+        and len(item) == 2
+        and is_hhmm(item[0])
+        and is_hhmm(item[1])
+    ]
+
+
+def parse_windows_minutes(raw: str | None) -> list[tuple[int, int]]:
+    """parse_windows but with each edge converted to minutes-since-midnight."""
+    return [(hhmm_to_min(s), hhmm_to_min(e)) for s, e in parse_windows(raw)]
 
 
 def place_new_window(existing: Iterable[Iterable[str]]) -> list[str]:
@@ -81,8 +117,6 @@ def resize_windows(existing: Iterable[Iterable[str]], target: int) -> list[list[
     """Truncate or grow `existing` to exactly `target` windows."""
     clamped = max(1, min(MAX_WINDOWS, int(target)))
     out = [list(w) for w in existing if isinstance(w, list) and len(w) == 2]
-    if len(out) == clamped:
-        return out
     if len(out) > clamped:
         return out[:clamped]
     while len(out) < clamped:
@@ -92,7 +126,16 @@ def resize_windows(existing: Iterable[Iterable[str]], target: int) -> list[list[
 
 def initial_windows_json(count: int, base: tuple[str, str]) -> str:
     """Wizard helper: build a starting JSON of size `count` from a single base window."""
-    out = [list(base)]
-    while len(out) < count:
+    clamped = max(1, min(MAX_WINDOWS, int(count)))
+    out: list[list[str]] = [list(base)]
+    while len(out) < clamped:
         out.append(place_new_window(out))
-    return json.dumps(out[: max(1, min(MAX_WINDOWS, int(count)))])
+    return json.dumps(out[:clamped])
+
+
+def validated_windows_json(raw: str, default: str) -> str:
+    """Return raw if it parses to a non-empty, length-bounded windows list, else default."""
+    windows = parse_windows(raw)
+    if not windows or len(windows) > MAX_WINDOWS:
+        return default
+    return json.dumps(windows)

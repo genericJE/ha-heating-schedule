@@ -2,19 +2,18 @@
 
 from __future__ import annotations
 
+import contextlib
 import json
-import logging
 from typing import TYPE_CHECKING
 
 from homeassistant.components.number import NumberEntity, NumberMode
-from homeassistant.const import UnitOfTemperature
+from homeassistant.const import EntityCategory, UnitOfTemperature
 from homeassistant.core import Event, EventStateChangedData, HomeAssistant, callback
-from homeassistant.helpers.entity import EntityCategory
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.event import async_track_state_change_event
 from homeassistant.helpers.restore_state import RestoreEntity
 
-from ._windows import parse_windows, resize_windows
+from ._windows import is_unusable, parse_windows, resize_windows
 from .const import (
     CONF_COMFORT_DEFAULT,
     CONF_NAME,
@@ -30,8 +29,6 @@ from .entity import HeatingScheduleRoomEntity
 
 if TYPE_CHECKING:
     from . import HeatingScheduleConfigEntry
-
-_LOGGER = logging.getLogger(__name__)
 
 
 async def async_setup_entry(
@@ -88,11 +85,9 @@ class HeatingComfortNumber(HeatingScheduleRoomEntity, NumberEntity, RestoreEntit
     async def async_added_to_hass(self) -> None:
         await super().async_added_to_hass()
         last = await self.async_get_last_state()
-        if last and last.state not in (None, "", "unknown", "unavailable"):
-            try:
+        if last and not is_unusable(last.state):
+            with contextlib.suppress(TypeError, ValueError):
                 self._attr_native_value = _clamp(float(last.state))
-            except (TypeError, ValueError):
-                pass
 
     async def async_set_native_value(self, value: float) -> None:
         clamped = _clamp(value)
@@ -145,10 +140,10 @@ class HeatingWindowCountNumber(HeatingScheduleRoomEntity, NumberEntity):
         if self.hass is None:
             return None
         state = self.hass.states.get(self._windows_entity_id)
-        if state is None or state.state in ("unavailable", "unknown", "none", ""):
+        if state is None or is_unusable(state.state):
             return None
         count = len(parse_windows(state.state))
-        return count if count > 0 else None
+        return count or None
 
     async def async_added_to_hass(self) -> None:
         await super().async_added_to_hass()

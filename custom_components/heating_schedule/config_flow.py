@@ -16,8 +16,6 @@ async_create_entry (first run) or async_update_entry (add-room run).
 
 from __future__ import annotations
 
-import json
-import logging
 from collections.abc import Mapping
 from typing import Any
 
@@ -42,12 +40,9 @@ from .const import (
     DEFAULT_COMFORT_MIN,
     DEFAULT_COMFORT_STEP,
     DEFAULT_SETBACK,
-    DEFAULT_WINDOWS_JSON,
     DOMAIN,
     MAX_WINDOWS,
 )
-
-_LOGGER = logging.getLogger(__name__)
 
 # Per-room defaults for the first window. The wizard's window-count slider
 # generates additional windows from there via initial_windows_json.
@@ -61,6 +56,63 @@ _MAX_ROOMS = 12
 
 CONF_ROOM_COUNT = "room_count"
 CONF_WINDOW_COUNT = "window_count"
+
+
+def _room_schema(suggested_name: str) -> vol.Schema:
+    """Schema shared by the per-room and add-room steps."""
+    return vol.Schema(
+        {
+            vol.Required(CONF_NAME, default=suggested_name): str,
+            vol.Required(CONF_CLIMATE_ENTITY): selector.EntitySelector(
+                selector.EntitySelectorConfig(domain="climate")
+            ),
+            vol.Optional(CONF_CURRENT_TEMP_ENTITY): selector.EntitySelector(
+                selector.EntitySelectorConfig(domain="sensor")
+            ),
+            vol.Optional(CONF_WINDOW_ENTITY): selector.EntitySelector(
+                selector.EntitySelectorConfig(domain="binary_sensor")
+            ),
+            vol.Required(
+                CONF_COMFORT_DEFAULT, default=DEFAULT_COMFORT
+            ): selector.NumberSelector(
+                selector.NumberSelectorConfig(
+                    min=DEFAULT_COMFORT_MIN,
+                    max=DEFAULT_COMFORT_MAX,
+                    step=DEFAULT_COMFORT_STEP,
+                    unit_of_measurement="°C",
+                    mode=selector.NumberSelectorMode.BOX,
+                )
+            ),
+            vol.Required(
+                CONF_WINDOW_COUNT, default=1
+            ): selector.NumberSelector(
+                selector.NumberSelectorConfig(
+                    min=1,
+                    max=MAX_WINDOWS,
+                    step=1,
+                    mode=selector.NumberSelectorMode.SLIDER,
+                )
+            ),
+        }
+    )
+
+
+def _room_payload(
+    user_input: Mapping[str, Any],
+    slug: str,
+    suggested_base: tuple[str, str],
+) -> dict[str, Any]:
+    """Build the per-room dict stored in entry.data from a step submission."""
+    count = int(user_input.get(CONF_WINDOW_COUNT, 1))
+    return {
+        CONF_SLUG: slug,
+        CONF_NAME: user_input[CONF_NAME].strip(),
+        CONF_CLIMATE_ENTITY: user_input[CONF_CLIMATE_ENTITY],
+        CONF_CURRENT_TEMP_ENTITY: user_input.get(CONF_CURRENT_TEMP_ENTITY) or None,
+        CONF_WINDOW_ENTITY: user_input.get(CONF_WINDOW_ENTITY) or None,
+        CONF_COMFORT_DEFAULT: float(user_input[CONF_COMFORT_DEFAULT]),
+        CONF_WINDOWS_DEFAULT: initial_windows_json(count, suggested_base),
+    }
 
 
 class HeatingScheduleConfigFlow(ConfigFlow, domain=DOMAIN):
@@ -123,69 +175,17 @@ class HeatingScheduleConfigFlow(ConfigFlow, domain=DOMAIN):
                 slug = _unique_slug(
                     name, [r[CONF_SLUG] for r in self._draft[CONF_ROOMS]]
                 )
-                count = int(user_input.get(CONF_WINDOW_COUNT, 1))
                 self._draft[CONF_ROOMS].append(
-                    {
-                        CONF_SLUG: slug,
-                        CONF_NAME: name,
-                        CONF_CLIMATE_ENTITY: user_input[CONF_CLIMATE_ENTITY],
-                        CONF_CURRENT_TEMP_ENTITY: user_input.get(
-                            CONF_CURRENT_TEMP_ENTITY
-                        )
-                        or None,
-                        CONF_WINDOW_ENTITY: user_input.get(CONF_WINDOW_ENTITY)
-                        or None,
-                        CONF_COMFORT_DEFAULT: float(
-                            user_input[CONF_COMFORT_DEFAULT]
-                        ),
-                        CONF_WINDOWS_DEFAULT: initial_windows_json(
-                            count, suggested_base
-                        ),
-                    }
+                    _room_payload(user_input, slug, suggested_base)
                 )
                 self._current_room_index += 1
                 if self._current_room_index >= self._room_count:
                     return await self.async_step_globals()
                 return await self.async_step_room()
 
-        schema = vol.Schema(
-            {
-                vol.Required(CONF_NAME, default=suggested_name): str,
-                vol.Required(CONF_CLIMATE_ENTITY): selector.EntitySelector(
-                    selector.EntitySelectorConfig(domain="climate")
-                ),
-                vol.Optional(CONF_CURRENT_TEMP_ENTITY): selector.EntitySelector(
-                    selector.EntitySelectorConfig(domain="sensor")
-                ),
-                vol.Optional(CONF_WINDOW_ENTITY): selector.EntitySelector(
-                    selector.EntitySelectorConfig(domain="binary_sensor")
-                ),
-                vol.Required(
-                    CONF_COMFORT_DEFAULT, default=DEFAULT_COMFORT
-                ): selector.NumberSelector(
-                    selector.NumberSelectorConfig(
-                        min=DEFAULT_COMFORT_MIN,
-                        max=DEFAULT_COMFORT_MAX,
-                        step=DEFAULT_COMFORT_STEP,
-                        unit_of_measurement="°C",
-                        mode=selector.NumberSelectorMode.BOX,
-                    )
-                ),
-                vol.Required(
-                    CONF_WINDOW_COUNT, default=1
-                ): selector.NumberSelector(
-                    selector.NumberSelectorConfig(
-                        min=1,
-                        max=MAX_WINDOWS,
-                        step=1,
-                        mode=selector.NumberSelectorMode.SLIDER,
-                    )
-                ),
-            }
-        )
         return self.async_show_form(
             step_id="room",
-            data_schema=schema,
+            data_schema=_room_schema(suggested_name),
             errors=errors,
             description_placeholders={
                 "index": str(self._current_room_index + 1),
@@ -257,19 +257,7 @@ class HeatingScheduleConfigFlow(ConfigFlow, domain=DOMAIN):
                 errors[CONF_NAME] = "name_required"
             else:
                 slug = _unique_slug(name, taken_slugs)
-                count = int(user_input.get(CONF_WINDOW_COUNT, 1))
-                new_room = {
-                    CONF_SLUG: slug,
-                    CONF_NAME: name,
-                    CONF_CLIMATE_ENTITY: user_input[CONF_CLIMATE_ENTITY],
-                    CONF_CURRENT_TEMP_ENTITY: user_input.get(CONF_CURRENT_TEMP_ENTITY)
-                    or None,
-                    CONF_WINDOW_ENTITY: user_input.get(CONF_WINDOW_ENTITY) or None,
-                    CONF_COMFORT_DEFAULT: float(user_input[CONF_COMFORT_DEFAULT]),
-                    CONF_WINDOWS_DEFAULT: initial_windows_json(
-                        count, suggested_base
-                    ),
-                }
+                new_room = _room_payload(user_input, slug, suggested_base)
                 new_data = dict(entry.data)
                 new_data[CONF_ROOMS] = [*existing_rooms, new_room]
                 self.hass.config_entries.async_update_entry(entry, data=new_data)
@@ -279,44 +267,9 @@ class HeatingScheduleConfigFlow(ConfigFlow, domain=DOMAIN):
                 # "extend an existing entry" pattern.
                 return self.async_abort(reason="room_added")
 
-        schema = vol.Schema(
-            {
-                vol.Required(CONF_NAME, default=suggested_name): str,
-                vol.Required(CONF_CLIMATE_ENTITY): selector.EntitySelector(
-                    selector.EntitySelectorConfig(domain="climate")
-                ),
-                vol.Optional(CONF_CURRENT_TEMP_ENTITY): selector.EntitySelector(
-                    selector.EntitySelectorConfig(domain="sensor")
-                ),
-                vol.Optional(CONF_WINDOW_ENTITY): selector.EntitySelector(
-                    selector.EntitySelectorConfig(domain="binary_sensor")
-                ),
-                vol.Required(
-                    CONF_COMFORT_DEFAULT, default=DEFAULT_COMFORT
-                ): selector.NumberSelector(
-                    selector.NumberSelectorConfig(
-                        min=DEFAULT_COMFORT_MIN,
-                        max=DEFAULT_COMFORT_MAX,
-                        step=DEFAULT_COMFORT_STEP,
-                        unit_of_measurement="°C",
-                        mode=selector.NumberSelectorMode.BOX,
-                    )
-                ),
-                vol.Required(
-                    CONF_WINDOW_COUNT, default=1
-                ): selector.NumberSelector(
-                    selector.NumberSelectorConfig(
-                        min=1,
-                        max=MAX_WINDOWS,
-                        step=1,
-                        mode=selector.NumberSelectorMode.SLIDER,
-                    )
-                ),
-            }
-        )
         return self.async_show_form(
             step_id="add_room",
-            data_schema=schema,
+            data_schema=_room_schema(suggested_name),
             errors=errors,
             description_placeholders={
                 "existing_count": str(len(existing_rooms)),
@@ -349,35 +302,6 @@ def _unique_slug(name: str, taken: list[str]) -> str:
     return f"{base}_{i}"
 
 
-def _validated_windows(raw: str) -> str:
-    """Return the canonical JSON form of raw windows, or the default."""
-    try:
-        parsed = json.loads(raw)
-    except (TypeError, ValueError):
-        return DEFAULT_WINDOWS_JSON
-    if not isinstance(parsed, list) or not parsed:
-        return DEFAULT_WINDOWS_JSON
-    cleaned: list[list[str]] = []
-    for item in parsed:
-        if not (
-            isinstance(item, list) and len(item) == 2 and all(_is_hhmm(x) for x in item)
-        ):
-            return DEFAULT_WINDOWS_JSON
-        cleaned.append(list(item))
-    return json.dumps(cleaned)
-
-
-def _is_hhmm(value: object) -> bool:
-    if not isinstance(value, str) or len(value) != 5 or value[2] != ":":
-        return False
-    try:
-        h = int(value[:2])
-        m = int(value[3:])
-    except ValueError:
-        return False
-    return 0 <= h <= 23 and 0 <= m <= 59
-
-
 def _dashboard_snippet(rooms: list[Mapping[str, Any]]) -> str:
     """Build a pasteable Lovelace YAML block for the configured rooms.
 
@@ -385,11 +309,15 @@ def _dashboard_snippet(rooms: list[Mapping[str, Any]]) -> str:
     {domain}.{device_slug}_{translation_key}, where device_slug is the
     slugified room name.
     """
-    lines: list[str] = ["type: grid", "column_span: 2", "cards:"]
-    lines.append("  - type: heading")
-    lines.append("    heading: Schedule")
-    lines.append("    icon: mdi:calendar-clock")
-    lines.append("    heading_style: title")
+    lines: list[str] = [
+        "type: grid",
+        "column_span: 2",
+        "cards:",
+        "  - type: heading",
+        "    heading: Schedule",
+        "    icon: mdi:calendar-clock",
+        "    heading_style: title",
+    ]
     for room in rooms:
         slug = room[CONF_SLUG]
         lines.append("  - type: custom:heating-window-slider-card")

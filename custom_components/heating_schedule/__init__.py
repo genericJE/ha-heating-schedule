@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import logging
 from pathlib import Path
 
 from homeassistant.components.http import StaticPathConfig
@@ -13,8 +12,6 @@ from homeassistant.helpers.device_registry import DeviceEntry
 
 from .const import CARD_FILENAME, CARD_URL, CONF_ROOMS, CONF_SLUG, DOMAIN, PLATFORMS
 from .schedule import HeatingScheduleController
-
-_LOGGER = logging.getLogger(__name__)
 
 type HeatingScheduleConfigEntry = ConfigEntry[HeatingScheduleController]
 

@@ -12,6 +12,11 @@ PLATFORMS = [Platform.NUMBER, Platform.SWITCH, Platform.TEXT, Platform.TIME]
 # YAML snippet emitted at the end of the config flow.
 PAUSE_UNIQUE_SUFFIX = "pause"
 
+# Hard-coded peer for the bidirectional pause mirror. If your install uses
+# a different input_boolean to gate pause-related YAML automations, change
+# this to its entity_id.
+EXTERNAL_PAUSE_BOOLEAN = "input_boolean.heating_paused"
+
 # Config entry keys
 CONF_ROOMS = "rooms"
 CONF_SETBACK = "setback"

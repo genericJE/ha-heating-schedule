@@ -19,10 +19,11 @@ from datetime import time
 from typing import TYPE_CHECKING
 
 from homeassistant.components.time import TimeEntity
+from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.entity import EntityCategory
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
+from ._windows import parse_windows
 from .const import (
     CONF_NAME,
     CONF_ROOMS,
@@ -37,7 +38,6 @@ if TYPE_CHECKING:
 _LOGGER = logging.getLogger(__name__)
 
 EDGES: tuple[str, ...] = ("start", "end")
-_UNUSABLE = ("unavailable", "unknown", "none", "")
 
 
 async def async_setup_entry(
@@ -46,16 +46,12 @@ async def async_setup_entry(
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up one time picker per (room, window slot, edge)."""
-    entities: list[HeatingWindowEdgeTime] = []
-    for room in entry.data.get(CONF_ROOMS, []):
-        slug = room[CONF_SLUG]
-        room_name = room[CONF_NAME]
-        for idx in range(MAX_WINDOWS):
-            for edge in EDGES:
-                entities.append(
-                    HeatingWindowEdgeTime(entry, slug, room_name, idx, edge)
-                )
-    async_add_entities(entities)
+    async_add_entities(
+        HeatingWindowEdgeTime(entry, room[CONF_SLUG], room[CONF_NAME], idx, edge)
+        for room in entry.data.get(CONF_ROOMS, [])
+        for idx in range(MAX_WINDOWS)
+        for edge in EDGES
+    )
 
 
 class HeatingWindowEdgeTime(HeatingScheduleRoomEntity, TimeEntity):
@@ -79,6 +75,7 @@ class HeatingWindowEdgeTime(HeatingScheduleRoomEntity, TimeEntity):
         super().__init__(entry, slug, room_name)
         self._window_idx = window_idx
         self._edge = edge
+        self._edge_pos = 0 if edge == "start" else 1
         self._attr_unique_id = (
             f"{entry.entry_id}_{slug}_window_{window_idx + 1}_{edge}"
         )
@@ -107,32 +104,18 @@ class HeatingWindowEdgeTime(HeatingScheduleRoomEntity, TimeEntity):
         if self.hass is None:
             return []
         state = self.hass.states.get(self._windows_entity_id)
-        if state is None or state.state in _UNUSABLE:
-            return []
-        try:
-            parsed = json.loads(state.state)
-        except (TypeError, ValueError):
-            return []
-        if not isinstance(parsed, list):
-            return []
-        out: list[list[str]] = []
-        for item in parsed:
-            if isinstance(item, list) and len(item) == 2:
-                out.append([str(item[0]), str(item[1])])
-        return out
+        return parse_windows(state.state if state else None)
 
     @property
     def native_value(self) -> time | None:
         windows = self._read_windows()
         if self._window_idx >= len(windows):
             return None
-        edge_value = windows[self._window_idx][0 if self._edge == "start" else 1]
-        return _parse_hhmm(edge_value)
+        return _parse_hhmm(windows[self._window_idx][self._edge_pos])
 
     @property
     def available(self) -> bool:
-        windows = self._read_windows()
-        return self._window_idx < len(windows)
+        return self._window_idx < len(self._read_windows())
 
     async def async_set_value(self, value: time) -> None:
         windows = self._read_windows()
@@ -145,10 +128,9 @@ class HeatingWindowEdgeTime(HeatingScheduleRoomEntity, TimeEntity):
             )
             return
         hhmm = f"{value.hour:02d}:{value.minute:02d}"
-        edge_pos = 0 if self._edge == "start" else 1
-        if windows[self._window_idx][edge_pos] == hhmm:
+        if windows[self._window_idx][self._edge_pos] == hhmm:
             return
-        windows[self._window_idx][edge_pos] = hhmm
+        windows[self._window_idx][self._edge_pos] = hhmm
         await self.hass.services.async_call(
             "text",
             "set_value",

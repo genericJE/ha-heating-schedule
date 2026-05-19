@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import json
-import logging
 from typing import TYPE_CHECKING
 
 from homeassistant.components.text import TextEntity, TextMode
@@ -11,20 +9,18 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.restore_state import RestoreEntity
 
+from ._windows import is_unusable, validated_windows_json
 from .const import (
     CONF_NAME,
     CONF_ROOMS,
     CONF_SLUG,
     CONF_WINDOWS_DEFAULT,
     DEFAULT_WINDOWS_JSON,
-    MAX_WINDOWS,
 )
 from .entity import HeatingScheduleRoomEntity
 
 if TYPE_CHECKING:
     from . import HeatingScheduleConfigEntry
-
-_LOGGER = logging.getLogger(__name__)
 
 
 async def async_setup_entry(
@@ -34,7 +30,7 @@ async def async_setup_entry(
 ) -> None:
     """Set up the text entities for each room."""
     rooms = entry.data.get(CONF_ROOMS, [])
-    entities = [
+    async_add_entities(
         HeatingWindowsText(
             entry,
             slug=room[CONF_SLUG],
@@ -42,8 +38,7 @@ async def async_setup_entry(
             initial_json=room.get(CONF_WINDOWS_DEFAULT, DEFAULT_WINDOWS_JSON),
         )
         for room in rooms
-    ]
-    async_add_entities(entities)
+    )
 
 
 class HeatingWindowsText(HeatingScheduleRoomEntity, TextEntity, RestoreEntity):
@@ -76,7 +71,9 @@ class HeatingWindowsText(HeatingScheduleRoomEntity, TextEntity, RestoreEntity):
     ) -> None:
         super().__init__(entry, slug, room_name)
         self._attr_unique_id = f"{entry.entry_id}_{slug}_windows"
-        self._attr_native_value = _validated_or_default(initial_json)
+        self._attr_native_value = validated_windows_json(
+            initial_json, DEFAULT_WINDOWS_JSON
+        )
         # Detach from the room device entirely so it doesn't clutter the
         # device's controls modal (where the time pickers + comfort are the
         # editing surface). The entity stays in the entity registry and the
@@ -94,42 +91,14 @@ class HeatingWindowsText(HeatingScheduleRoomEntity, TextEntity, RestoreEntity):
         """Restore last known value or fall back to the configured default."""
         await super().async_added_to_hass()
         last = await self.async_get_last_state()
-        if last and last.state not in (None, "", "unknown", "unavailable"):
-            self._attr_native_value = _validated_or_default(last.state)
+        if last and not is_unusable(last.state):
+            self._attr_native_value = validated_windows_json(
+                last.state, DEFAULT_WINDOWS_JSON
+            )
 
     async def async_set_value(self, value: str) -> None:
         """Validate and store a new JSON window list."""
-        validated = _validated_or_default(value)
+        validated = validated_windows_json(value, DEFAULT_WINDOWS_JSON)
         if validated != self._attr_native_value:
             self._attr_native_value = validated
             self.async_write_ha_state()
-
-
-def _validated_or_default(raw: str) -> str:
-    """Return raw if it's a valid JSON window list (1..MAX_WINDOWS), else default."""
-    try:
-        parsed = json.loads(raw)
-    except (TypeError, ValueError):
-        return DEFAULT_WINDOWS_JSON
-    if not isinstance(parsed, list) or not parsed or len(parsed) > MAX_WINDOWS:
-        return DEFAULT_WINDOWS_JSON
-    cleaned: list[list[str]] = []
-    for item in parsed:
-        if not (isinstance(item, list) and len(item) == 2):
-            return DEFAULT_WINDOWS_JSON
-        a, b = item
-        if not (_is_hhmm(a) and _is_hhmm(b)):
-            return DEFAULT_WINDOWS_JSON
-        cleaned.append([a, b])
-    return json.dumps(cleaned)
-
-
-def _is_hhmm(s: object) -> bool:
-    if not isinstance(s, str) or len(s) != 5 or s[2] != ":":
-        return False
-    try:
-        h = int(s[:2])
-        m = int(s[3:])
-    except ValueError:
-        return False
-    return 0 <= h <= 23 and 0 <= m <= 59

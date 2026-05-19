@@ -3,13 +3,16 @@
 from __future__ import annotations
 
 import asyncio
-import json
 import logging
 from dataclasses import dataclass
 from datetime import datetime, timedelta
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
-from homeassistant.const import EVENT_HOMEASSISTANT_STARTED
+from homeassistant.const import (
+    EVENT_HOMEASSISTANT_STARTED,
+    STATE_OFF,
+    STATE_ON,
+)
 from homeassistant.core import (
     CALLBACK_TYPE,
     Context,
@@ -25,10 +28,7 @@ from homeassistant.helpers.event import (
 )
 from homeassistant.util import dt as dt_util
 
-# Hard-coded peer for the pause sync. If your install uses a different
-# input_boolean to gate pause-related YAML automations, change this.
-EXTERNAL_PAUSE_BOOLEAN = "input_boolean.heating_paused"
-
+from ._windows import is_unusable, parse_windows_minutes
 from .const import (
     CONF_CLIMATE_ENTITY,
     CONF_NAME,
@@ -38,6 +38,7 @@ from .const import (
     DEFAULT_COMFORT,
     DEFAULT_SETBACK,
     DOMAIN,
+    EXTERNAL_PAUSE_BOOLEAN,
     MAX_WINDOWS,
     PAUSE_SETTLE_SECONDS,
     PAUSE_UNIQUE_SUFFIX,
@@ -47,8 +48,6 @@ if TYPE_CHECKING:
     from . import HeatingScheduleConfigEntry
 
 _LOGGER = logging.getLogger(__name__)
-
-_UNUSABLE_STATES = ("unavailable", "unknown", "none", "")
 
 
 @dataclass
@@ -60,6 +59,15 @@ class _Room:
     comfort_entity: str
 
 
+def _in_window(start: int, end: int, now: int) -> bool:
+    """Wrap-aware window membership matching the YAML/card semantics."""
+    if start == end:
+        return False
+    if start < end:
+        return start <= now < end
+    return now >= start or now < end
+
+
 class HeatingScheduleController:
     """Owns the schedule loop for one config entry."""
 
@@ -69,8 +77,11 @@ class HeatingScheduleController:
         self.hass = hass
         self.entry = entry
         self._unsub_callbacks: list[CALLBACK_TYPE] = []
-        self._rooms = self._resolve_rooms()
-        self._pause_entity: str | None = self._resolve_pause_switch()
+        # _rooms + _pause_entity are resolved in async_start, after platform
+        # setup has populated the entity registry. Resolving here would race
+        # against the platform forward and yield empty results.
+        self._rooms: list[_Room] = []
+        self._pause_entity: str | None = None
         self._setback: float = float(entry.data.get(CONF_SETBACK, DEFAULT_SETBACK))
         self._pause_sync = _PauseSync(hass)
 
@@ -87,6 +98,9 @@ class HeatingScheduleController:
         The suggested_object_id we set on the entity is just a hint; HA may
         append a suffix if there's a collision. We look up the real entity_id
         via the registry using the unique_id we set in text.py / number.py.
+        Falls back to the suggested form when the registry lookup misses,
+        which keeps the controller running even if a room's entity has been
+        manually removed from the registry.
         """
         registry = er.async_get(self.hass)
         rooms: list[_Room] = []
@@ -103,10 +117,8 @@ class HeatingScheduleController:
                     slug=slug,
                     name=room[CONF_NAME],
                     climate_entity=room[CONF_CLIMATE_ENTITY],
-                    windows_entity=windows_eid
-                    or f"text.heating_schedule_windows_{slug}",
-                    comfort_entity=comfort_eid
-                    or f"number.heating_schedule_comfort_{slug}",
+                    windows_entity=windows_eid or f"text.{slug}_windows",
+                    comfort_entity=comfort_eid or f"number.{slug}_comfort",
                 )
             )
         return rooms
@@ -115,15 +127,14 @@ class HeatingScheduleController:
 
     async def async_start(self) -> None:
         """Wire up triggers and run an initial evaluation."""
-        # Re-resolve in case platform setup just registered entities that
-        # weren't yet in the registry when __init__ ran.
         self._rooms = self._resolve_rooms()
         self._pause_entity = self._resolve_pause_switch()
-        watched_per_room: list[str] = []
-        for room in self._rooms:
-            watched_per_room.append(room.windows_entity)
-            watched_per_room.append(room.comfort_entity)
 
+        watched_per_room = [
+            entity
+            for room in self._rooms
+            for entity in (room.windows_entity, room.comfort_entity)
+        ]
         self._unsub_callbacks.append(
             async_track_state_change_event(
                 self.hass, watched_per_room, self._on_room_entity_change
@@ -163,9 +174,7 @@ class HeatingScheduleController:
 
         if self.hass.is_running:
             self.hass.async_create_task(self._evaluate_all_after_settle())
-        else:
-            # HA still booting; the EVENT_HOMEASSISTANT_STARTED handler will fire.
-            pass
+        # else: HA still booting; EVENT_HOMEASSISTANT_STARTED handler will fire.
 
     async def async_stop(self) -> None:
         """Cancel all subscriptions."""
@@ -184,9 +193,11 @@ class HeatingScheduleController:
     def _on_room_entity_change(self, event: Event[EventStateChangedData]) -> None:
         entity_id = event.data["entity_id"]
         for room in self._rooms:
-            if entity_id in (room.windows_entity, room.comfort_entity):
-                if entity_id == room.windows_entity:
-                    self._reconcile_time_entities_for_room(room)
+            if entity_id == room.windows_entity:
+                self._reconcile_time_entities_for_room(room)
+                self.hass.async_create_task(self._evaluate_room(room))
+                return
+            if entity_id == room.comfort_entity:
                 self.hass.async_create_task(self._evaluate_room(room))
                 return
 
@@ -201,7 +212,7 @@ class HeatingScheduleController:
             entry = registry.async_get(entity_id)
             if entry is None:
                 continue
-            update: dict[str, object] = {}
+            update: dict[str, Any] = {}
             # Detach from the room device — covers existing installs that
             # were created before HeatingWindowsText dropped device_info.
             if entry.device_id is not None:
@@ -224,9 +235,9 @@ class HeatingScheduleController:
         for. User-initiated disables (USER, CONFIG_ENTRY etc.) are left alone.
         """
         registry = er.async_get(self.hass)
-        windows = self._read_windows(room.windows_entity)
-        count = len(windows)
+        count = len(self._read_windows(room.windows_entity))
         for idx in range(MAX_WINDOWS):
+            should_be_enabled = idx < count
             for edge in ("start", "end"):
                 unique_id = f"{self.entry.entry_id}_{room.slug}_window_{idx + 1}_{edge}"
                 entity_id = registry.async_get_entity_id("time", DOMAIN, unique_id)
@@ -235,8 +246,10 @@ class HeatingScheduleController:
                 entry = registry.async_get(entity_id)
                 if entry is None:
                     continue
-                should_be_enabled = idx < count
-                if should_be_enabled and entry.disabled_by == er.RegistryEntryDisabler.INTEGRATION:
+                if (
+                    should_be_enabled
+                    and entry.disabled_by == er.RegistryEntryDisabler.INTEGRATION
+                ):
                     registry.async_update_entity(entity_id, disabled_by=None)
                 elif not should_be_enabled and entry.disabled_by is None:
                     registry.async_update_entity(
@@ -249,12 +262,12 @@ class HeatingScheduleController:
         new = event.data.get("new_state")
         if old is None or new is None:
             return
-        if old.state == "off" and new.state == "on":
+        if old.state == STATE_OFF and new.state == STATE_ON:
             # Active push to setback so currently-warm rooms cool down,
             # mirroring the YAML "Apply Heating Pause" automation.
             self.hass.async_create_task(self._apply_setback_all())
-        elif old.state == "on" and new.state == "off":
-            # 5 s settle then re-evaluate from schedule + comfort.
+        elif old.state == STATE_ON and new.state == STATE_OFF:
+            # 5s settle then re-evaluate from schedule + comfort.
             self.hass.async_create_task(self._evaluate_all_after_settle())
 
     @callback
@@ -276,8 +289,7 @@ class HeatingScheduleController:
         if self._is_paused():
             return
         await asyncio.gather(
-            *(self._evaluate_room(room) for room in self._rooms),
-            return_exceptions=False,
+            *(self._evaluate_room(room) for room in self._rooms)
         )
 
     async def _apply_setback_all(self) -> None:
@@ -288,13 +300,12 @@ class HeatingScheduleController:
         stay quiet.
         """
         await asyncio.gather(
-            *(self._write_climate(room, self._setback) for room in self._rooms),
-            return_exceptions=False,
+            *(self._write_climate(room, self._setback) for room in self._rooms)
         )
 
     async def _write_climate(self, room: _Room, desired: float) -> None:
         climate_state = self.hass.states.get(room.climate_entity)
-        if climate_state is None or climate_state.state in _UNUSABLE_STATES:
+        if climate_state is None or is_unusable(climate_state.state):
             return
         current = climate_state.attributes.get("temperature")
         if current is None:
@@ -305,9 +316,7 @@ class HeatingScheduleController:
         except (TypeError, ValueError):
             return
         _LOGGER.debug(
-            "heating_schedule: %s -> %.1f (pause-driven)",
-            room.climate_entity,
-            desired,
+            "heating_schedule: %s -> %.1f", room.climate_entity, desired
         )
         await self.hass.services.async_call(
             "climate",
@@ -336,11 +345,11 @@ class HeatingScheduleController:
         if not self._pause_entity:
             return False
         state = self.hass.states.get(self._pause_entity)
-        return state is not None and state.state == "on"
+        return state is not None and state.state == STATE_ON
 
     def _read_number(self, entity_id: str, fallback: float) -> float:
         state = self.hass.states.get(entity_id)
-        if state is None or state.state in _UNUSABLE_STATES:
+        if state is None or is_unusable(state.state):
             return fallback
         try:
             return float(state.state)
@@ -349,25 +358,9 @@ class HeatingScheduleController:
 
     def _read_windows(self, entity_id: str) -> list[tuple[int, int]]:
         state = self.hass.states.get(entity_id)
-        if state is None or state.state in _UNUSABLE_STATES:
+        if state is None or is_unusable(state.state):
             return []
-        try:
-            parsed = json.loads(state.state)
-        except (TypeError, ValueError):
-            return []
-        if not isinstance(parsed, list):
-            return []
-        out: list[tuple[int, int]] = []
-        for item in parsed:
-            if not (isinstance(item, list) and len(item) == 2):
-                continue
-            try:
-                s = _hhmm_to_min(item[0])
-                e = _hhmm_to_min(item[1])
-            except (TypeError, ValueError):
-                continue
-            out.append((s, e))
-        return out
+        return parse_windows_minutes(state.state)
 
 
 class _PauseSync:
@@ -412,86 +405,95 @@ class _PauseSync:
         # adopt whatever state it's already in.
         bool_state = self.hass.states.get(EXTERNAL_PAUSE_BOOLEAN)
         sw_state = self.hass.states.get(switch_entity)
-        if bool_state and bool_state.state in ("on", "off") and sw_state and sw_state.state != bool_state.state:
+        if (
+            bool_state
+            and bool_state.state in (STATE_ON, STATE_OFF)
+            and sw_state
+            and sw_state.state != bool_state.state
+        ):
             await self._mirror_to_switch(bool_state.state)
 
     async def async_stop(self) -> None:
         for u in self._unsubs:
             u()
         self._unsubs.clear()
+        self._own_context_ids.clear()
 
     @callback
     def _on_switch_change(self, event: Event[EventStateChangedData]) -> None:
         if event.context.id in self._own_context_ids:
             self._own_context_ids.discard(event.context.id)
             return
-        new = event.data.get("new_state")
-        old = event.data.get("old_state")
-        if (
-            not new
-            or not old
-            or new.state == old.state
-            or new.state not in ("on", "off")
-            or old.state not in ("on", "off")
-        ):
+        new_state = _propagatable_new_state(event)
+        if new_state is None or not self.hass.states.get(EXTERNAL_PAUSE_BOOLEAN):
             return
-        if not self.hass.states.get(EXTERNAL_PAUSE_BOOLEAN):
-            return
-        self.hass.async_create_task(self._mirror_to_boolean(new.state))
+        self.hass.async_create_task(self._mirror_to_boolean(new_state))
 
     @callback
     def _on_boolean_change(self, event: Event[EventStateChangedData]) -> None:
         if event.context.id in self._own_context_ids:
             self._own_context_ids.discard(event.context.id)
             return
-        new = event.data.get("new_state")
-        old = event.data.get("old_state")
+        new_state = _propagatable_new_state(event)
         if (
-            not new
-            or not old
-            or new.state == old.state
-            or new.state not in ("on", "off")
-            or old.state not in ("on", "off")
+            new_state is None
+            or not self._switch_entity
+            or not self.hass.states.get(self._switch_entity)
         ):
             return
-        if not self._switch_entity or not self.hass.states.get(self._switch_entity):
-            return
-        self.hass.async_create_task(self._mirror_to_switch(new.state))
+        self.hass.async_create_task(self._mirror_to_switch(new_state))
 
     async def _mirror_to_switch(self, state: str) -> None:
+        # Skip the service call if the target is already at the desired
+        # state. Without this, a same-state turn_on/turn_off would no-op
+        # silently and leak the context id (no state-change event to
+        # discard it).
+        if not self._switch_entity:
+            return
+        cur = self.hass.states.get(self._switch_entity)
+        if cur is None or cur.state == state:
+            return
         ctx = Context()
         self._own_context_ids.add(ctx.id)
         await self.hass.services.async_call(
             "switch",
-            "turn_on" if state == "on" else "turn_off",
+            "turn_on" if state == STATE_ON else "turn_off",
             {"entity_id": self._switch_entity},
             blocking=False,
             context=ctx,
         )
 
     async def _mirror_to_boolean(self, state: str) -> None:
+        cur = self.hass.states.get(EXTERNAL_PAUSE_BOOLEAN)
+        if cur is None or cur.state == state:
+            return
         ctx = Context()
         self._own_context_ids.add(ctx.id)
         await self.hass.services.async_call(
             "input_boolean",
-            "turn_on" if state == "on" else "turn_off",
+            "turn_on" if state == STATE_ON else "turn_off",
             {"entity_id": EXTERNAL_PAUSE_BOOLEAN},
             blocking=False,
             context=ctx,
         )
 
 
-def _hhmm_to_min(value: object) -> int:
-    if not isinstance(value, str):
-        raise TypeError("expected HH:MM string")
-    h, _, m = value.partition(":")
-    return int(h) * 60 + int(m)
+def _propagatable_new_state(event: Event[EventStateChangedData]) -> str | None:
+    """Return the new state if this change should be propagated, else None.
 
-
-def _in_window(start: int, end: int, now: int) -> bool:
-    """Wrap-aware window membership matching the YAML/card semantics."""
-    if start == end:
-        return False
-    if start < end:
-        return start <= now < end
-    return now >= start or now < end
+    Both old and new state must be on/off. A transition out of unavailable/
+    unknown (e.g. unavailable -> off when the integration reloads while a
+    pause is active) is the entity re-materialising at its restored default,
+    not a user toggle, and propagating it would silently clear the peer.
+    """
+    old = event.data.get("old_state")
+    new = event.data.get("new_state")
+    if (
+        new is None
+        or old is None
+        or new.state == old.state
+        or new.state not in (STATE_ON, STATE_OFF)
+        or old.state not in (STATE_ON, STATE_OFF)
+    ):
+        return None
+    return new.state
