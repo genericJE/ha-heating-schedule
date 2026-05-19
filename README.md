@@ -32,7 +32,8 @@ A per-room heating schedule for Home Assistant. Each room gets a card with a 24-
 
 This installs the card *and* provisions everything else — per-room heating window storage, comfort target, the schedule controller — through a normal HA config flow.
 
-1. **HACS** → ⋮ → *Custom repositories* → add this repo's URL, type **Integration**, install *Heating Schedule*. Restart HA.
+1. **HACS** → search for *Heating Schedule* → install → restart HA.
+   *(Until the integration is accepted into HACS default: ⋮ → **Custom repositories** → add `https://github.com/genericJE/ha-heating-schedule`, type **Integration** → install → restart.)*
 2. **Settings → Devices & Services → Add Integration → "Heating Schedule"**. The wizard asks for the number of rooms, then per room: name + climate entity (+ optional current-temperature sensor and window binary sensor) + comfort temperature + initial heating windows. The last step shows a pasteable Lovelace YAML snippet for a sections view.
 3. **Settings → Dashboards → Resources → Add resource** → URL `/heating_schedule/heating-window-slider-card.js`, type *JavaScript module*. (One-time. The integration serves the card from its own static path.)
 4. Paste the YAML snippet into a sections-style dashboard view.
