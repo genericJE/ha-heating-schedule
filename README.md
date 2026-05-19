@@ -41,8 +41,10 @@ This installs the card *and* provisions everything else — per-room window stor
 
 Per room you get:
 
-- `text.heating_schedule_windows_<slug>` — JSON window list, written by the card slider.
-- `number.heating_schedule_comfort_<slug>` — comfort target, written by the card spinner.
+- `text.<slug>_windows` — JSON window list, written by the card slider.
+- `number.<slug>_comfort` — comfort target, written by the card spinner.
+
+(`<slug>` is the room name slugified — `Living Room` → `living_room`.)
 
 The schedule controller runs inside the integration (per-minute tick + state-change listeners + HA start + optional `input_boolean.heating_paused` off-transition with a 5 s settle). It writes `set_temperature` to your climate entity when in-window and the configured setback otherwise, with an idempotent guard so unchanged targets stay quiet.
 

@@ -704,8 +704,8 @@ class HeatingWindowSliderCard extends HTMLElement {
 
   static getStubConfig() {
     return {
-      windows_entity: 'text.heating_schedule_windows_bedroom',
-      comfort_entity: 'number.heating_schedule_comfort_bedroom',
+      windows_entity: 'text.bedroom_windows',
+      comfort_entity: 'number.bedroom_comfort',
       climate_entity: 'climate.bedroom',
       current_temp_entity: 'sensor.bedroom_temperature',
       window_entity: 'binary_sensor.bedroom_window',
