@@ -41,6 +41,7 @@ from .const import (
     EXTERNAL_PAUSE_BOOLEAN,
     MAX_WINDOWS,
     PAUSE_SETTLE_SECONDS,
+    PAUSE_SNAPSHOT_DELAY_SECONDS,
     PAUSE_UNIQUE_SUFFIX,
 )
 
@@ -263,9 +264,10 @@ class HeatingScheduleController:
         if old is None or new is None:
             return
         if old.state == STATE_OFF and new.state == STATE_ON:
-            # Active push to setback so currently-warm rooms cool down,
-            # mirroring the YAML "Apply Heating Pause" automation.
-            self.hass.async_create_task(self._apply_setback_all())
+            # Brief delay then push setback so a peer automation snapshotting
+            # the climates on the same boolean edge (Apply Heating Pause's
+            # scene.create) captures pre-pause state before we lower it.
+            self.hass.async_create_task(self._apply_setback_all_after_snapshot())
         elif old.state == STATE_ON and new.state == STATE_OFF:
             # 5s settle then re-evaluate from schedule + comfort.
             self.hass.async_create_task(self._evaluate_all_after_settle())
@@ -291,6 +293,11 @@ class HeatingScheduleController:
         await asyncio.gather(
             *(self._evaluate_room(room) for room in self._rooms)
         )
+
+    async def _apply_setback_all_after_snapshot(self) -> None:
+        """Let a peer automation snapshot pre-pause state, then push setback."""
+        await asyncio.sleep(PAUSE_SNAPSHOT_DELAY_SECONDS)
+        await self._apply_setback_all()
 
     async def _apply_setback_all(self) -> None:
         """Push every room's climate entity to the setback temperature.

@@ -39,6 +39,11 @@ DEFAULT_COMFORT_STEP = 0.5
 DEFAULT_WINDOWS_JSON = '[["07:00","22:00"]]'
 MAX_WINDOWS = 4
 PAUSE_SETTLE_SECONDS = 5
+# Pause-on delay before pushing setback. Gives any peer automation (e.g.
+# a YAML "Apply Heating Pause" scene.create snapshot) firing on the same
+# input_boolean.heating_paused off->on edge time to capture pre-pause
+# climate state before we start lowering it.
+PAUSE_SNAPSHOT_DELAY_SECONDS = 2
 
 # Card asset
 CARD_FILENAME = "heating-window-slider-card.js"
