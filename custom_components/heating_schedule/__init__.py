@@ -8,8 +8,10 @@ from pathlib import Path
 from homeassistant.components.http import StaticPathConfig
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers import entity_registry as er
+from homeassistant.helpers.device_registry import DeviceEntry
 
-from .const import CARD_FILENAME, CARD_URL, DOMAIN, PLATFORMS
+from .const import CARD_FILENAME, CARD_URL, CONF_ROOMS, CONF_SLUG, DOMAIN, PLATFORMS
 from .schedule import HeatingScheduleController
 
 _LOGGER = logging.getLogger(__name__)
@@ -56,3 +58,63 @@ async def _async_update_listener(
 ) -> None:
     """Reload the entry when the user edits options."""
     await hass.config_entries.async_reload(entry.entry_id)
+
+
+async def async_remove_config_entry_device(
+    hass: HomeAssistant,
+    entry: HeatingScheduleConfigEntry,
+    device_entry: DeviceEntry,
+) -> bool:
+    """Handle the 'Delete device' button on the device info page.
+
+    Room devices: drop the room from entry data and clean up the detached
+    text entity (HA's device-removal cascade only catches entities attached
+    to the device). The update listener then reloads the entry, so the
+    schedule controller stops watching the room. Return True so HA proceeds
+    to remove the device + its directly-attached entities (number, time).
+
+    Hub device: refuse — there's nothing useful to do per-device on the hub.
+    To remove the whole integration the user can delete the config entry
+    itself from the integration listing.
+    """
+    slug = _room_slug_for_device(entry, device_entry)
+    if slug is None:
+        return False
+
+    rooms = list(entry.data.get(CONF_ROOMS, []))
+    remaining = [r for r in rooms if r.get(CONF_SLUG) != slug]
+    if len(remaining) == len(rooms):
+        # Already gone from entry data (stale device). Let HA clean it up.
+        return True
+
+    new_data = dict(entry.data)
+    new_data[CONF_ROOMS] = remaining
+    hass.config_entries.async_update_entry(entry, data=new_data)
+
+    registry = er.async_get(hass)
+    text_eid = registry.async_get_entity_id(
+        "text", DOMAIN, f"{entry.entry_id}_{slug}_windows"
+    )
+    if text_eid:
+        registry.async_remove(text_eid)
+
+    return True
+
+
+def _room_slug_for_device(
+    entry: HeatingScheduleConfigEntry, device_entry: DeviceEntry
+) -> str | None:
+    """Return the room slug for a room device, or None for hub/stranger.
+
+    Room identifiers are (DOMAIN, f"{entry_id}_{slug}"); the hub is
+    (DOMAIN, entry_id). Anything else isn't ours.
+    """
+    prefix = f"{entry.entry_id}_"
+    for domain, identifier in device_entry.identifiers:
+        if domain != DOMAIN:
+            continue
+        if identifier == entry.entry_id:
+            return None
+        if identifier.startswith(prefix):
+            return identifier[len(prefix) :]
+    return None
