@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING
 from homeassistant.components.number import NumberEntity, NumberMode
 from homeassistant.const import UnitOfTemperature
 from homeassistant.core import Event, EventStateChangedData, HomeAssistant, callback
+from homeassistant.helpers.entity import EntityCategory
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.event import async_track_state_change_event
 from homeassistant.helpers.restore_state import RestoreEntity
@@ -108,6 +109,7 @@ class HeatingWindowCountNumber(HeatingScheduleRoomEntity, NumberEntity):
     _attr_native_step = 1
     _attr_mode = NumberMode.SLIDER
     _attr_icon = "mdi:calendar-multiple"
+    _attr_entity_category = EntityCategory.CONFIG
 
     def __init__(
         self,

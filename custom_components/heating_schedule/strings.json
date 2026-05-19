@@ -50,7 +50,7 @@
         "name": "Comfort"
       },
       "window_count": {
-        "name": "Number of heating windows"
+        "name": "Windows"
       }
     },
     "switch": {
@@ -59,14 +59,14 @@
       }
     },
     "time": {
-      "window_1_start": { "name": "Start 1" },
-      "window_1_end":   { "name": "End 1" },
-      "window_2_start": { "name": "Start 2" },
-      "window_2_end":   { "name": "End 2" },
-      "window_3_start": { "name": "Start 3" },
-      "window_3_end":   { "name": "End 3" },
-      "window_4_start": { "name": "Start 4" },
-      "window_4_end":   { "name": "End 4" }
+      "window_1_start": { "name": "▶1" },
+      "window_1_end":   { "name": "◼1" },
+      "window_2_start": { "name": "▶2" },
+      "window_2_end":   { "name": "◼2" },
+      "window_3_start": { "name": "▶3" },
+      "window_3_end":   { "name": "◼3" },
+      "window_4_start": { "name": "▶4" },
+      "window_4_end":   { "name": "◼4" }
     }
   }
 }

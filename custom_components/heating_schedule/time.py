@@ -20,6 +20,7 @@ from typing import TYPE_CHECKING
 
 from homeassistant.components.time import TimeEntity
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers.entity import EntityCategory
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .const import (
@@ -65,6 +66,8 @@ class HeatingWindowEdgeTime(HeatingScheduleRoomEntity, TimeEntity):
     the card see the same value.
     """
 
+    _attr_entity_category = EntityCategory.CONFIG
+
     def __init__(
         self,
         entry: HeatingScheduleConfigEntry,
@@ -80,6 +83,11 @@ class HeatingWindowEdgeTime(HeatingScheduleRoomEntity, TimeEntity):
             f"{entry.entry_id}_{slug}_window_{window_idx + 1}_{edge}"
         )
         self._attr_translation_key = f"window_{window_idx + 1}_{edge}"
+        # mdi:clock-start exists in mdi 7.4+; gives a visual hint for
+        # start vs end that survives label truncation.
+        self._attr_icon = (
+            "mdi:clock-start" if edge == "start" else "mdi:clock-end"
+        )
         # Off by default for slots beyond the first; controller flips
         # disabled_by on the registry to match the current window count.
         self._attr_entity_registry_enabled_default = window_idx == 0
