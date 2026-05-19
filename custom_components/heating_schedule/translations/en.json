@@ -17,7 +17,7 @@
           "current_temp_entity": "Current temperature sensor (optional)",
           "window_entity": "Window open binary sensor (optional)",
           "comfort_default": "Initial comfort temperature",
-          "windows_default": "Initial windows (JSON, e.g. [[\"07:00\",\"22:00\"]])"
+          "window_count": "Number of heating windows"
         }
       },
       "globals": {
@@ -54,6 +54,16 @@
       "pause": {
         "name": "Pause"
       }
+    },
+    "time": {
+      "window_1_start": { "name": "Window 1 start" },
+      "window_1_end":   { "name": "Window 1 end" },
+      "window_2_start": { "name": "Window 2 start" },
+      "window_2_end":   { "name": "Window 2 end" },
+      "window_3_start": { "name": "Window 3 start" },
+      "window_3_end":   { "name": "Window 3 end" },
+      "window_4_start": { "name": "Window 4 start" },
+      "window_4_end":   { "name": "Window 4 end" }
     }
   }
 }

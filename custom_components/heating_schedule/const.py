@@ -5,7 +5,7 @@ from __future__ import annotations
 from homeassistant.const import Platform
 
 DOMAIN = "heating_schedule"
-PLATFORMS = [Platform.NUMBER, Platform.SWITCH, Platform.TEXT]
+PLATFORMS = [Platform.NUMBER, Platform.SWITCH, Platform.TEXT, Platform.TIME]
 
 # Stable entity_id of the integration-owned pause switch, used by the
 # schedule controller's _resolve_pause_switch fallback and by the dashboard

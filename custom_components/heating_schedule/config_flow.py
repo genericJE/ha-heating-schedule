@@ -39,19 +39,80 @@ from .const import (
     DEFAULT_SETBACK,
     DEFAULT_WINDOWS_JSON,
     DOMAIN,
+    MAX_WINDOWS,
 )
 
 _LOGGER = logging.getLogger(__name__)
 
-_SUGGESTED_ROOMS: tuple[tuple[str, str], ...] = (
-    ("Bedroom", '[["22:00","07:00"]]'),
-    ("Living Room", '[["07:00","23:00"]]'),
-    ("Kitchen", '[["07:00","22:00"]]'),
-    ("Bathroom", '[["07:00","22:00"]]'),
+# Per-room defaults for the first window. The wizard's window-count slider
+# generates additional windows from there using _place_new_window.
+_SUGGESTED_ROOMS: tuple[tuple[str, tuple[str, str]], ...] = (
+    ("Bedroom", ("22:00", "07:00")),
+    ("Living Room", ("07:00", "23:00")),
+    ("Kitchen", ("07:00", "22:00")),
+    ("Bathroom", ("07:00", "22:00")),
 )
 _MAX_ROOMS = 12
+_DAY = 1440
+_NEW_WINDOW_MIN_MINUTES = 60
 
 CONF_ROOM_COUNT = "room_count"
+CONF_WINDOW_COUNT = "window_count"
+
+
+def _hhmm_to_min(s: str) -> int:
+    h, m = s.split(":")
+    return int(h) * 60 + int(m)
+
+
+def _min_to_hhmm(m: int) -> str:
+    v = m % _DAY
+    return f"{v // 60:02d}:{v % 60:02d}"
+
+
+def _place_new_window(existing: list[list[str]]) -> list[str]:
+    """Python port of placeNewWindow in heating-window-slider-card.js.
+
+    Picks a new [start, end] window centred in the largest cyclic gap
+    between the existing ones, so additions don't stack on the same slot.
+    """
+    if not existing:
+        return ["07:00", "22:00"]
+    spans: list[tuple[int, int]] = []
+    for w in existing:
+        s, e = _hhmm_to_min(w[0]), _hhmm_to_min(w[1])
+        if s == e:
+            continue
+        if s < e:
+            spans.append((s, e))
+        else:
+            spans.append((s, _DAY))
+            spans.append((0, e))
+    spans.sort()
+    if not spans:
+        return ["07:00", "22:00"]
+    best_gap_start, best_gap_size = 0, 0
+    for i, span in enumerate(spans):
+        prev = (spans[-1][0] - _DAY, spans[-1][1] - _DAY) if i == 0 else spans[i - 1]
+        gap_start, gap_size = prev[1], span[0] - prev[1]
+        if gap_size > best_gap_size:
+            best_gap_size = gap_size
+            best_gap_start = gap_start % _DAY
+    if best_gap_size < _NEW_WINDOW_MIN_MINUTES:
+        best_gap_size = max(best_gap_size, 30)
+    win_size = min(_NEW_WINDOW_MIN_MINUTES, best_gap_size // 2)
+    start = (best_gap_start + (best_gap_size - win_size) // 2 + _DAY) % _DAY
+    end = (start + win_size) % _DAY
+    return [_min_to_hhmm(start), _min_to_hhmm(end)]
+
+
+def _generate_initial_windows(count: int, base: tuple[str, str]) -> str:
+    """Build the JSON used as the text entity's first state, given count."""
+    count = max(1, min(MAX_WINDOWS, int(count)))
+    windows = [list(base)]
+    while len(windows) < count:
+        windows.append(_place_new_window(windows))
+    return json.dumps(windows)
 
 
 class HeatingScheduleConfigFlow(ConfigFlow, domain=DOMAIN):
@@ -97,7 +158,7 @@ class HeatingScheduleConfigFlow(ConfigFlow, domain=DOMAIN):
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
         errors: dict[str, str] = {}
-        suggested_name, suggested_windows = _SUGGESTED_ROOMS[
+        suggested_name, suggested_base = _SUGGESTED_ROOMS[
             self._current_room_index % len(_SUGGESTED_ROOMS)
         ]
 
@@ -109,6 +170,7 @@ class HeatingScheduleConfigFlow(ConfigFlow, domain=DOMAIN):
                 slug = _unique_slug(
                     name, [r[CONF_SLUG] for r in self._draft[CONF_ROOMS]]
                 )
+                count = int(user_input.get(CONF_WINDOW_COUNT, 1))
                 self._draft[CONF_ROOMS].append(
                     {
                         CONF_SLUG: slug,
@@ -123,9 +185,8 @@ class HeatingScheduleConfigFlow(ConfigFlow, domain=DOMAIN):
                         CONF_COMFORT_DEFAULT: float(
                             user_input[CONF_COMFORT_DEFAULT]
                         ),
-                        CONF_WINDOWS_DEFAULT: _validated_windows(
-                            user_input.get(CONF_WINDOWS_DEFAULT)
-                            or suggested_windows
+                        CONF_WINDOWS_DEFAULT: _generate_initial_windows(
+                            count, suggested_base
                         ),
                     }
                 )
@@ -157,9 +218,16 @@ class HeatingScheduleConfigFlow(ConfigFlow, domain=DOMAIN):
                         mode=selector.NumberSelectorMode.BOX,
                     )
                 ),
-                vol.Optional(
-                    CONF_WINDOWS_DEFAULT, default=suggested_windows
-                ): str,
+                vol.Required(
+                    CONF_WINDOW_COUNT, default=1
+                ): selector.NumberSelector(
+                    selector.NumberSelectorConfig(
+                        min=1,
+                        max=MAX_WINDOWS,
+                        step=1,
+                        mode=selector.NumberSelectorMode.SLIDER,
+                    )
+                ),
             }
         )
         return self.async_show_form(

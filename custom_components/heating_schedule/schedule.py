@@ -38,6 +38,7 @@ from .const import (
     DEFAULT_COMFORT,
     DEFAULT_SETBACK,
     DOMAIN,
+    MAX_WINDOWS,
     PAUSE_SETTLE_SECONDS,
     PAUSE_UNIQUE_SUFFIX,
 )
@@ -150,6 +151,11 @@ class HeatingScheduleController:
 
         await self._pause_sync.async_start(self._pause_entity)
 
+        # Initial reconciliation in case the user's previously-set count
+        # differs from the registry's stored disabled_by state.
+        for room in self._rooms:
+            self._reconcile_time_entities_for_room(room)
+
         if self.hass.is_running:
             self.hass.async_create_task(self._evaluate_all_after_settle())
         else:
@@ -174,8 +180,39 @@ class HeatingScheduleController:
         entity_id = event.data["entity_id"]
         for room in self._rooms:
             if entity_id in (room.windows_entity, room.comfort_entity):
+                if entity_id == room.windows_entity:
+                    self._reconcile_time_entities_for_room(room)
                 self.hass.async_create_task(self._evaluate_room(room))
                 return
+
+    @callback
+    def _reconcile_time_entities_for_room(self, room: _Room) -> None:
+        """Match each per-edge time entity's disabled_by to the current count.
+
+        The time platform pre-creates MAX_WINDOWS * 2 entities per room.
+        Slots beyond the current window count are disabled_by=INTEGRATION so
+        the device page only shows the entities the user actually has windows
+        for. User-initiated disables (USER, CONFIG_ENTRY etc.) are left alone.
+        """
+        registry = er.async_get(self.hass)
+        windows = self._read_windows(room.windows_entity)
+        count = len(windows)
+        for idx in range(MAX_WINDOWS):
+            for edge in ("start", "end"):
+                unique_id = f"{self.entry.entry_id}_{room.slug}_window_{idx + 1}_{edge}"
+                entity_id = registry.async_get_entity_id("time", DOMAIN, unique_id)
+                if not entity_id:
+                    continue
+                entry = registry.async_get(entity_id)
+                if entry is None:
+                    continue
+                should_be_enabled = idx < count
+                if should_be_enabled and entry.disabled_by == er.RegistryEntryDisabler.INTEGRATION:
+                    registry.async_update_entity(entity_id, disabled_by=None)
+                elif not should_be_enabled and entry.disabled_by is None:
+                    registry.async_update_entity(
+                        entity_id, disabled_by=er.RegistryEntryDisabler.INTEGRATION
+                    )
 
     @callback
     def _on_pause_change(self, event: Event[EventStateChangedData]) -> None:
