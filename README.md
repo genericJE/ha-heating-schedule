@@ -48,7 +48,9 @@ Per room you get:
 
 (`<slug>` is the room name slugified — `Living Room` → `living_room`.)
 
-The schedule controller runs inside the integration (per-minute tick + state-change listeners + HA start + optional `input_boolean.heating_paused` off-transition with a 5 s settle). It writes `set_temperature` to your climate entity when in-window and the configured setback otherwise, with an idempotent guard so unchanged targets stay quiet.
+You also get a single `switch.heating_schedule_pause` (see [Pause](#pause) below).
+
+The schedule controller runs inside the integration: per-minute tick + state-change listeners on the per-room text/number entities + `homeassistant.start` + the pause switch's off-transition (with a 5 s settle). It writes `set_temperature` to your climate entity when in-window and the configured setback otherwise, with an idempotent guard so unchanged targets stay quiet.
 
 ### B. Manual YAML install (the original path)
 
@@ -101,18 +103,39 @@ Each write is guarded by `current_target ≠ desired`, so re-evaluations that ma
 - After every drag the schedule is **canonicalised** (sorted by start). If a drag causes a window to "wrap", the window ends up last in the list with `end < start`, and the slider renders both fill segments automatically. There's no separate wrap mode toggle.
 - **Window count is configuration only.** The card has no `+` / `−` UI; the number of windows is the JSON array length in the `input_text` helper (1 to 4). To add or remove a window, edit the helper (Developer Tools → States, or call `input_text.set_value`).
 
-## Integration with `heating_paused` / `Resume Heating`
+## Pause
 
-The flow assumes the same shape as my installation:
+The integration creates one `switch.heating_schedule_pause`, owned and persisted by the integration. Toggle it from a dashboard tile, a service call, a Lovelace tap action, or any automation — the controller writes setback (default `14 °C`) to every configured climate and stops re-evaluating until you flip it back off. On flip-off, a 5 s settle delay lets any peer cleanup automations land before the schedule re-asserts.
+
+### `input_boolean.heating_paused` as an entry point
+
+If you have an `input_boolean.heating_paused` helper, the integration mirrors it bidirectionally with `switch.heating_schedule_pause`. Flipping either side propagates to the other (a context-id guard breaks the feedback loop). That keeps the boolean as a stable entry point for buttons and automations to pause the schedule.
+
+Example: if you take a vacation for a week and want to pause the heating schedule, add a "Vacation heating toggle" button to your dashboard:
+
+```yaml
+type: button
+entity: input_boolean.heating_paused
+name: Vacation heating
+icon: mdi:beach
+```
+
+Tap once → boolean flips on → mirror flips the switch → integration pushes every room to setback. Anything else you've wired to the boolean (a scene snapshot, a heat-source flow-temp lowering automation, a leave-home notification, a vacation-mode cascade) keeps firing.
+
+**Semantics**: pre-pause manual climate-target overrides do not survive across a pause. The schedule wins on resume.
+
+### Legacy YAML install: `Apply Heating Pause` / `Resume Heating on Return`
+
+The YAML install path predates the integration. Its pause flow uses two cooperating automations:
 
 - **Apply Heating Pause** on `heating_paused: off → on` — snapshots `scene.heating_pause_snapshot`, sets all rooms to 14 °C.
 - **Resume Heating on Return** on `eta ≤ now` — turns `heating_paused` off, restores from the scene, 3 s settle, then optional Hc1DayTemp fallback.
 
-This automation includes a 5 s delay on the "all rooms" branch (triggered by `heating_paused` off-transition or HA start) so Resume's scene restore lands before the schedule re-asserts. The idempotent write guard keeps things quiet when the scene's restored values already match the schedule's desired state.
+The YAML schedule automation includes a 5 s delay on the "all rooms" branch (triggered by `heating_paused` off-transition or HA start) so Resume's scene restore lands before the schedule re-asserts. The idempotent write guard keeps things quiet when the scene's restored values already match the schedule's desired state.
 
-If a user manually un-pauses (without Resume firing, e.g. by tapping the Pause button), the schedule simply writes comfort/setback after the 5 s delay — no scene needed.
+If a user manually un-pauses (e.g. by tapping the Pause button), the schedule writes comfort/setback after the 5 s delay — no scene needed.
 
-**Semantics**: pre-pause manual climate-target overrides do not survive across a pause. The schedule wins on resume. If you'd rather have manual overrides persist, remove the `heating_paused` state trigger from the automation; the schedule will reassert on the next tick or helper change anyway.
+When upgrading from YAML to the integration: the integration's sync layer means both pause entities stay aligned, so the YAML automations keep firing on the boolean while the integration controller responds via the switch. You can drop the YAML schedule automation; the integration replaces it.
 
 ## Customisation
 
