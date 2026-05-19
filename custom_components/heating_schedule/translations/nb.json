@@ -1,0 +1,64 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Varmeplan",
+        "description": "For hvor mange rom vil du planlegge? Du kan endre dette senere ved å fjerne og legge til integrasjonen på nytt.",
+        "data": {
+          "room_count": "Antall rom"
+        }
+      },
+      "room": {
+        "title": "Rom {index} av {total}",
+        "description": "Velg et navn og klimaentiteten for dette rommet. De valgfrie sensorene og vindusoppføringen driver undertittelen for nåværende temperatur og åpent-vindu-ikonet på kortet.",
+        "data": {
+          "name": "Rommets navn",
+          "climate_entity": "Klimaentitet (mål)",
+          "current_temp_entity": "Nåværende temperatursensor (valgfritt)",
+          "window_entity": "Binær sensor for åpent vindu (valgfritt)",
+          "comfort_default": "Initial komforttemperatur",
+          "window_count": "Antall varmevinduer"
+        }
+      },
+      "globals": {
+        "title": "Senking",
+        "description": "Velg temperaturen å falle tilbake til utenfor alle vinduer. Integrasjonen oppretter også `switch.heating_schedule_pause` — veksle den (fra en flis, en automatisering, hvor som helst) for å skyve hvert rom til senking og stoppe planen til du veksler tilbake.",
+        "data": {
+          "setback": "Senkingstemperatur"
+        }
+      },
+      "summary": {
+        "title": "Legg til kortene på dashbordet",
+        "description": "Oppsett klart. Legg til kortet som en Lovelace-ressurs (Innstillinger → Dashbord → Ressurser):\n\n- URL `/heating_schedule/heating-window-slider-card.js`\n- Type *JavaScript-modul*\n\nLim deretter inn denne YAML-en i en sections-visning:\n\n```yaml\n{dashboard_yaml}\n```\n\nKlikk på **Send** for å fullføre."
+      }
+    },
+    "error": {
+      "name_required": "Vennligst angi et rom-navn."
+    },
+    "abort": {
+      "already_configured": "Varmeplan er allerede konfigurert."
+    }
+  },
+  "entity": {
+    "text": {
+      "windows": { "name": "Vinduer" }
+    },
+    "number": {
+      "comfort": { "name": "Komfort" },
+      "window_count": { "name": "Vinduer" }
+    },
+    "switch": {
+      "pause": { "name": "Pause" }
+    },
+    "time": {
+      "window_1_start": { "name": "▶1" },
+      "window_1_end":   { "name": "◼1" },
+      "window_2_start": { "name": "▶2" },
+      "window_2_end":   { "name": "◼2" },
+      "window_3_start": { "name": "▶3" },
+      "window_3_end":   { "name": "◼3" },
+      "window_4_start": { "name": "▶4" },
+      "window_4_end":   { "name": "◼4" }
+    }
+  }
+}

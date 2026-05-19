@@ -1,0 +1,64 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Horari de calefacció",
+        "description": "Per a quantes habitacions vols programar? Pots canviar-ho més tard eliminant i tornant a afegir la integració.",
+        "data": {
+          "room_count": "Nombre d'habitacions"
+        }
+      },
+      "room": {
+        "title": "Habitació {index} de {total}",
+        "description": "Tria un nom i l'entitat de clima per a aquesta habitació. Els sensors opcionals i l'entrada de finestra alimenten el subtítol de temperatura actual i la icona de finestra oberta a la targeta.",
+        "data": {
+          "name": "Nom de l'habitació",
+          "climate_entity": "Entitat de clima (objectiu)",
+          "current_temp_entity": "Sensor de temperatura actual (opcional)",
+          "window_entity": "Sensor binari de finestra oberta (opcional)",
+          "comfort_default": "Temperatura de confort inicial",
+          "window_count": "Nombre de finestres de calefacció"
+        }
+      },
+      "globals": {
+        "title": "Retrocés",
+        "description": "Tria la temperatura a la qual tornar fora de qualsevol finestra. La integració també crea `switch.heating_schedule_pause` — commuta'l (des d'un tile, una automatització, on sigui) per portar cada habitació al retrocés i aturar l'horari fins que el tornis a desactivar.",
+        "data": {
+          "setback": "Temperatura de retrocés"
+        }
+      },
+      "summary": {
+        "title": "Afegeix les targetes al teu tauler",
+        "description": "Configuració llesta. Afegeix la targeta com a recurs Lovelace (Configuració → Taulers → Recursos):\n\n- URL `/heating_schedule/heating-window-slider-card.js`\n- Tipus *Mòdul JavaScript*\n\nLlavors enganxa aquest YAML en una vista d'estil sections:\n\n```yaml\n{dashboard_yaml}\n```\n\nFes clic a **Envia** per acabar."
+      }
+    },
+    "error": {
+      "name_required": "Si us plau, introdueix un nom d'habitació."
+    },
+    "abort": {
+      "already_configured": "L'horari de calefacció ja està configurat."
+    }
+  },
+  "entity": {
+    "text": {
+      "windows": { "name": "Finestres" }
+    },
+    "number": {
+      "comfort": { "name": "Confort" },
+      "window_count": { "name": "Finestres" }
+    },
+    "switch": {
+      "pause": { "name": "Pausa" }
+    },
+    "time": {
+      "window_1_start": { "name": "▶1" },
+      "window_1_end":   { "name": "◼1" },
+      "window_2_start": { "name": "▶2" },
+      "window_2_end":   { "name": "◼2" },
+      "window_3_start": { "name": "▶3" },
+      "window_3_end":   { "name": "◼3" },
+      "window_4_start": { "name": "▶4" },
+      "window_4_end":   { "name": "◼4" }
+    }
+  }
+}

@@ -1,0 +1,64 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Värmeschema",
+        "description": "För hur många rum vill du schemalägga? Du kan ändra detta senare genom att ta bort och lägga till integrationen igen.",
+        "data": {
+          "room_count": "Antal rum"
+        }
+      },
+      "room": {
+        "title": "Rum {index} av {total}",
+        "description": "Välj ett namn och klimatenheten för det här rummet. De valfria sensorerna och fönsterposten driver underrubriken för aktuell temperatur och ikonen för öppet fönster på kortet.",
+        "data": {
+          "name": "Rumsnamn",
+          "climate_entity": "Klimatenhet (mål)",
+          "current_temp_entity": "Aktuell temperatursensor (valfri)",
+          "window_entity": "Binär sensor för öppet fönster (valfri)",
+          "comfort_default": "Initial komforttemperatur",
+          "window_count": "Antal värmefönster"
+        }
+      },
+      "globals": {
+        "title": "Sänkning",
+        "description": "Välj temperaturen att falla tillbaka till utanför alla fönster. Integrationen skapar också `switch.heating_schedule_pause` — växla den (från en bricka, en automation, var som helst) för att skjuta varje rum till sänkning och stoppa schemat tills du växlar tillbaka.",
+        "data": {
+          "setback": "Sänkningstemperatur"
+        }
+      },
+      "summary": {
+        "title": "Lägg till korten till din instrumentpanel",
+        "description": "Installation klar. Lägg till kortet som en Lovelace-resurs (Inställningar → Instrumentpaneler → Resurser):\n\n- URL `/heating_schedule/heating-window-slider-card.js`\n- Typ *JavaScript-modul*\n\nKlistra sedan in denna YAML i en sections-vy:\n\n```yaml\n{dashboard_yaml}\n```\n\nKlicka på **Skicka** för att slutföra."
+      }
+    },
+    "error": {
+      "name_required": "Ange ett rumsnamn."
+    },
+    "abort": {
+      "already_configured": "Värmeschema är redan konfigurerat."
+    }
+  },
+  "entity": {
+    "text": {
+      "windows": { "name": "Fönster" }
+    },
+    "number": {
+      "comfort": { "name": "Komfort" },
+      "window_count": { "name": "Fönster" }
+    },
+    "switch": {
+      "pause": { "name": "Paus" }
+    },
+    "time": {
+      "window_1_start": { "name": "▶1" },
+      "window_1_end":   { "name": "◼1" },
+      "window_2_start": { "name": "▶2" },
+      "window_2_end":   { "name": "◼2" },
+      "window_3_start": { "name": "▶3" },
+      "window_3_end":   { "name": "◼3" },
+      "window_4_start": { "name": "▶4" },
+      "window_4_end":   { "name": "◼4" }
+    }
+  }
+}

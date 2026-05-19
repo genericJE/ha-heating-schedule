@@ -1,0 +1,64 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Verwarmingsschema",
+        "description": "Voor hoeveel kamers wil je een schema instellen? Je kunt dit later wijzigen door de integratie te verwijderen en opnieuw toe te voegen.",
+        "data": {
+          "room_count": "Aantal kamers"
+        }
+      },
+      "room": {
+        "title": "Kamer {index} van {total}",
+        "description": "Kies een naam en de klimaatentiteit voor deze kamer. De optionele sensoren en raaminvoer voeden de huidige-temperatuur-ondertitel en het open-raam-icoon op de kaart.",
+        "data": {
+          "name": "Naam van de kamer",
+          "climate_entity": "Klimaatentiteit (doel)",
+          "current_temp_entity": "Huidige temperatuursensor (optioneel)",
+          "window_entity": "Binaire sensor voor open raam (optioneel)",
+          "comfort_default": "Initiële comforttemperatuur",
+          "window_count": "Aantal verwarmingsvensters"
+        }
+      },
+      "globals": {
+        "title": "Terugval",
+        "description": "Kies de temperatuur om naar terug te vallen buiten elk venster. De integratie maakt ook `switch.heating_schedule_pause` — schakel hem in (vanaf een tegel, een automatisering, waar dan ook) om elke kamer naar de terugvaltemperatuur te brengen en het schema te stoppen tot je hem weer uitschakelt.",
+        "data": {
+          "setback": "Terugvaltemperatuur"
+        }
+      },
+      "summary": {
+        "title": "Voeg de kaarten toe aan je dashboard",
+        "description": "Installatie is klaar. Voeg de kaart toe als Lovelace-bron (Instellingen → Dashboards → Bronnen):\n\n- URL `/heating_schedule/heating-window-slider-card.js`\n- Type *JavaScript-module*\n\nPlak dan deze YAML in een sections-weergave:\n\n```yaml\n{dashboard_yaml}\n```\n\nKlik op **Verzenden** om af te ronden."
+      }
+    },
+    "error": {
+      "name_required": "Voer een kamernaam in."
+    },
+    "abort": {
+      "already_configured": "Verwarmingsschema is al geconfigureerd."
+    }
+  },
+  "entity": {
+    "text": {
+      "windows": { "name": "Vensters" }
+    },
+    "number": {
+      "comfort": { "name": "Comfort" },
+      "window_count": { "name": "Vensters" }
+    },
+    "switch": {
+      "pause": { "name": "Pauze" }
+    },
+    "time": {
+      "window_1_start": { "name": "▶1" },
+      "window_1_end":   { "name": "◼1" },
+      "window_2_start": { "name": "▶2" },
+      "window_2_end":   { "name": "◼2" },
+      "window_3_start": { "name": "▶3" },
+      "window_3_end":   { "name": "◼3" },
+      "window_4_start": { "name": "▶4" },
+      "window_4_end":   { "name": "◼4" }
+    }
+  }
+}

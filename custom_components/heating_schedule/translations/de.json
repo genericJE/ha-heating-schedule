@@ -1,0 +1,64 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Heizplan",
+        "description": "Für wie viele Räume möchtest du planen? Du kannst dies später ändern, indem du die Integration entfernst und neu hinzufügst.",
+        "data": {
+          "room_count": "Anzahl der Räume"
+        }
+      },
+      "room": {
+        "title": "Raum {index} von {total}",
+        "description": "Wähle einen Namen und die Klimaentität für diesen Raum. Die optionalen Sensoren und der Fenstereintrag steuern den Untertitel der aktuellen Temperatur und das Symbol für offenes Fenster auf der Karte.",
+        "data": {
+          "name": "Raumname",
+          "climate_entity": "Klimaentität (Ziel)",
+          "current_temp_entity": "Aktueller Temperatursensor (optional)",
+          "window_entity": "Binärsensor für offenes Fenster (optional)",
+          "comfort_default": "Initiale Komforttemperatur",
+          "window_count": "Anzahl der Heizfenster"
+        }
+      },
+      "globals": {
+        "title": "Absenkung",
+        "description": "Wähle die Absenktemperatur außerhalb der Fenster. Die Integration erstellt auch `switch.heating_schedule_pause` — schalte ihn (von einer Kachel, einer Automatisierung, überall) um, um jeden Raum auf die Absenktemperatur zu setzen und den Zeitplan anzuhalten, bis du ihn wieder ausschaltest.",
+        "data": {
+          "setback": "Absenktemperatur"
+        }
+      },
+      "summary": {
+        "title": "Füge die Karten zu deinem Dashboard hinzu",
+        "description": "Einrichtung ist bereit. Füge die Karte als Lovelace-Ressource hinzu (Einstellungen → Dashboards → Ressourcen):\n\n- URL `/heating_schedule/heating-window-slider-card.js`\n- Typ *JavaScript-Modul*\n\nDann füge dieses YAML in eine Sections-Ansicht ein:\n\n```yaml\n{dashboard_yaml}\n```\n\nKlicke auf **Senden** zum Abschließen."
+      }
+    },
+    "error": {
+      "name_required": "Bitte gib einen Raumnamen ein."
+    },
+    "abort": {
+      "already_configured": "Heizplan ist bereits konfiguriert."
+    }
+  },
+  "entity": {
+    "text": {
+      "windows": { "name": "Fenster" }
+    },
+    "number": {
+      "comfort": { "name": "Komfort" },
+      "window_count": { "name": "Fenster" }
+    },
+    "switch": {
+      "pause": { "name": "Pause" }
+    },
+    "time": {
+      "window_1_start": { "name": "▶1" },
+      "window_1_end":   { "name": "◼1" },
+      "window_2_start": { "name": "▶2" },
+      "window_2_end":   { "name": "◼2" },
+      "window_3_start": { "name": "▶3" },
+      "window_3_end":   { "name": "◼3" },
+      "window_4_start": { "name": "▶4" },
+      "window_4_end":   { "name": "◼4" }
+    }
+  }
+}

@@ -1,0 +1,64 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Fűtési ütemterv",
+        "description": "Hány szobához szeretne ütemtervet beállítani? Ezt később módosíthatja az integráció eltávolításával és újbóli hozzáadásával.",
+        "data": {
+          "room_count": "Szobák száma"
+        }
+      },
+      "room": {
+        "title": "{index}. szoba a(z) {total}-ből",
+        "description": "Válasszon egy nevet és a klíma entitást ehhez a szobához. A választható érzékelők és az ablak bejegyzés táplálja a kártya jelenlegi-hőmérséklet alcímét és a nyitott-ablak ikont.",
+        "data": {
+          "name": "Szoba neve",
+          "climate_entity": "Klíma entitás (cél)",
+          "current_temp_entity": "Jelenlegi hőmérséklet érzékelő (opcionális)",
+          "window_entity": "Nyitott ablak bináris érzékelő (opcionális)",
+          "comfort_default": "Kezdeti komfort hőmérséklet",
+          "window_count": "Fűtési ablakok száma"
+        }
+      },
+      "globals": {
+        "title": "Csökkentés",
+        "description": "Válassza ki a hőmérsékletet, amelyre vissza kell esni bármely ablakon kívül. Az integráció létrehozza a `switch.heating_schedule_pause`-t is — kapcsolja át (csempéről, automatizálásból, bárhonnan), hogy minden szobát a csökkentési hőmérsékletre állítson és leállítsa az ütemtervet, amíg vissza nem kapcsolja.",
+        "data": {
+          "setback": "Csökkentési hőmérséklet"
+        }
+      },
+      "summary": {
+        "title": "Adja hozzá a kártyákat az irányítópulthoz",
+        "description": "A beállítás kész. Adja hozzá a kártyát Lovelace erőforrásként (Beállítások → Irányítópultok → Erőforrások):\n\n- URL `/heating_schedule/heating-window-slider-card.js`\n- Típus *JavaScript modul*\n\nMajd illessze be ezt a YAML-t egy sections stílusú nézetbe:\n\n```yaml\n{dashboard_yaml}\n```\n\nKattintson a **Küldés** gombra a befejezéshez."
+      }
+    },
+    "error": {
+      "name_required": "Kérjük, adjon meg egy szoba nevet."
+    },
+    "abort": {
+      "already_configured": "A fűtési ütemterv már be van állítva."
+    }
+  },
+  "entity": {
+    "text": {
+      "windows": { "name": "Ablakok" }
+    },
+    "number": {
+      "comfort": { "name": "Komfort" },
+      "window_count": { "name": "Ablakok" }
+    },
+    "switch": {
+      "pause": { "name": "Szünet" }
+    },
+    "time": {
+      "window_1_start": { "name": "▶1" },
+      "window_1_end":   { "name": "◼1" },
+      "window_2_start": { "name": "▶2" },
+      "window_2_end":   { "name": "◼2" },
+      "window_3_start": { "name": "▶3" },
+      "window_3_end":   { "name": "◼3" },
+      "window_4_start": { "name": "▶4" },
+      "window_4_end":   { "name": "◼4" }
+    }
+  }
+}

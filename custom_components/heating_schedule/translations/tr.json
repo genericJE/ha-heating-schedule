@@ -1,0 +1,64 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Isıtma programı",
+        "description": "Kaç oda için program ayarlamak istiyorsunuz? Bunu daha sonra entegrasyonu kaldırıp tekrar ekleyerek değiştirebilirsiniz.",
+        "data": {
+          "room_count": "Oda sayısı"
+        }
+      },
+      "room": {
+        "title": "Oda {index}/{total}",
+        "description": "Bu oda için bir ad ve iklim varlığı seçin. İsteğe bağlı sensörler ve pencere girişi, karttaki mevcut sıcaklık altyazısını ve açık pencere simgesini besler.",
+        "data": {
+          "name": "Oda adı",
+          "climate_entity": "İklim varlığı (hedef)",
+          "current_temp_entity": "Mevcut sıcaklık sensörü (isteğe bağlı)",
+          "window_entity": "Açık pencere ikili sensörü (isteğe bağlı)",
+          "comfort_default": "Başlangıç konfor sıcaklığı",
+          "window_count": "Isıtma pencerelerinin sayısı"
+        }
+      },
+      "globals": {
+        "title": "Geri çekilme",
+        "description": "Herhangi bir pencerenin dışında geri dönülecek sıcaklığı seçin. Entegrasyon ayrıca `switch.heating_schedule_pause` oluşturur — onu (bir karoda, bir otomasyondan, herhangi bir yerden) açıp kapatın ki her odayı geri çekilmeye itin ve siz onu tekrar kapatana kadar programı durdurun.",
+        "data": {
+          "setback": "Geri çekilme sıcaklığı"
+        }
+      },
+      "summary": {
+        "title": "Kartları panonuza ekleyin",
+        "description": "Kurulum hazır. Kartı bir Lovelace kaynağı olarak ekleyin (Ayarlar → Panolar → Kaynaklar):\n\n- URL `/heating_schedule/heating-window-slider-card.js`\n- Tür *JavaScript modülü*\n\nArdından bu YAML'ı sections stili bir görünüme yapıştırın:\n\n```yaml\n{dashboard_yaml}\n```\n\nBitirmek için **Gönder**'e tıklayın."
+      }
+    },
+    "error": {
+      "name_required": "Lütfen bir oda adı girin."
+    },
+    "abort": {
+      "already_configured": "Isıtma programı zaten yapılandırılmış."
+    }
+  },
+  "entity": {
+    "text": {
+      "windows": { "name": "Pencereler" }
+    },
+    "number": {
+      "comfort": { "name": "Konfor" },
+      "window_count": { "name": "Pencereler" }
+    },
+    "switch": {
+      "pause": { "name": "Duraklat" }
+    },
+    "time": {
+      "window_1_start": { "name": "▶1" },
+      "window_1_end":   { "name": "◼1" },
+      "window_2_start": { "name": "▶2" },
+      "window_2_end":   { "name": "◼2" },
+      "window_3_start": { "name": "▶3" },
+      "window_3_end":   { "name": "◼3" },
+      "window_4_start": { "name": "▶4" },
+      "window_4_end":   { "name": "◼4" }
+    }
+  }
+}

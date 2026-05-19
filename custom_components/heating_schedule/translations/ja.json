@@ -1,0 +1,64 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "暖房スケジュール",
+        "description": "いくつの部屋のスケジュールを設定しますか？後で統合を削除して再度追加することで変更できます。",
+        "data": {
+          "room_count": "部屋の数"
+        }
+      },
+      "room": {
+        "title": "部屋 {index}/{total}",
+        "description": "この部屋の名前と気候エンティティを選択してください。オプションのセンサーと窓のエントリは、カードの現在の温度の字幕と窓開きアイコンを駆動します。",
+        "data": {
+          "name": "部屋の名前",
+          "climate_entity": "気候エンティティ(ターゲット)",
+          "current_temp_entity": "現在の温度センサー(オプション)",
+          "window_entity": "窓開きバイナリセンサー(オプション)",
+          "comfort_default": "初期快適温度",
+          "window_count": "暖房ウィンドウの数"
+        }
+      },
+      "globals": {
+        "title": "セットバック",
+        "description": "任意のウィンドウの外で戻る温度を選択してください。統合は `switch.heating_schedule_pause` も作成します — タイル、オートメーション、どこからでも切り替えて、各部屋をセットバックに押し戻し、再度オフに切り替えるまでスケジュールを停止します。",
+        "data": {
+          "setback": "セットバック温度"
+        }
+      },
+      "summary": {
+        "title": "カードをダッシュボードに追加",
+        "description": "セットアップ完了。カードをLovelaceリソースとして追加してください(設定 → ダッシュボード → リソース):\n\n- URL `/heating_schedule/heating-window-slider-card.js`\n- タイプ *JavaScriptモジュール*\n\n次に、このYAMLをsectionsスタイルのビューに貼り付けます:\n\n```yaml\n{dashboard_yaml}\n```\n\n**送信**をクリックして完了します。"
+      }
+    },
+    "error": {
+      "name_required": "部屋の名前を入力してください。"
+    },
+    "abort": {
+      "already_configured": "暖房スケジュールはすでに設定されています。"
+    }
+  },
+  "entity": {
+    "text": {
+      "windows": { "name": "ウィンドウ" }
+    },
+    "number": {
+      "comfort": { "name": "快適" },
+      "window_count": { "name": "ウィンドウ" }
+    },
+    "switch": {
+      "pause": { "name": "一時停止" }
+    },
+    "time": {
+      "window_1_start": { "name": "▶1" },
+      "window_1_end":   { "name": "◼1" },
+      "window_2_start": { "name": "▶2" },
+      "window_2_end":   { "name": "◼2" },
+      "window_3_start": { "name": "▶3" },
+      "window_3_end":   { "name": "◼3" },
+      "window_4_start": { "name": "▶4" },
+      "window_4_end":   { "name": "◼4" }
+    }
+  }
+}

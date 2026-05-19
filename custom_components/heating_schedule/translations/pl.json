@@ -1,0 +1,64 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Harmonogram ogrzewania",
+        "description": "Dla ilu pokoi chcesz ustawić harmonogram? Możesz to później zmienić, usuwając integrację i dodając ją ponownie.",
+        "data": {
+          "room_count": "Liczba pokoi"
+        }
+      },
+      "room": {
+        "title": "Pokój {index} z {total}",
+        "description": "Wybierz nazwę i encję klimatu dla tego pokoju. Opcjonalne czujniki i wpis okna zasilają podtytuł aktualnej temperatury i ikonę otwartego okna na karcie.",
+        "data": {
+          "name": "Nazwa pokoju",
+          "climate_entity": "Encja klimatu (cel)",
+          "current_temp_entity": "Czujnik aktualnej temperatury (opcjonalny)",
+          "window_entity": "Binarny czujnik otwartego okna (opcjonalny)",
+          "comfort_default": "Początkowa temperatura komfortu",
+          "window_count": "Liczba okien grzewczych"
+        }
+      },
+      "globals": {
+        "title": "Obniżenie",
+        "description": "Wybierz temperaturę do której wracać poza dowolnym oknem. Integracja tworzy również `switch.heating_schedule_pause` — przełącz go (z kafelka, automatyzacji, skądkolwiek), aby przełączyć każdy pokój na obniżenie i zatrzymać harmonogram, dopóki nie wyłączysz go ponownie.",
+        "data": {
+          "setback": "Temperatura obniżenia"
+        }
+      },
+      "summary": {
+        "title": "Dodaj karty do panelu",
+        "description": "Konfiguracja gotowa. Dodaj kartę jako zasób Lovelace (Ustawienia → Panele → Zasoby):\n\n- URL `/heating_schedule/heating-window-slider-card.js`\n- Typ *Moduł JavaScript*\n\nNastępnie wklej ten YAML do widoku w stylu sections:\n\n```yaml\n{dashboard_yaml}\n```\n\nKliknij **Wyślij**, aby zakończyć."
+      }
+    },
+    "error": {
+      "name_required": "Wprowadź nazwę pokoju."
+    },
+    "abort": {
+      "already_configured": "Harmonogram ogrzewania jest już skonfigurowany."
+    }
+  },
+  "entity": {
+    "text": {
+      "windows": { "name": "Okna" }
+    },
+    "number": {
+      "comfort": { "name": "Komfort" },
+      "window_count": { "name": "Okna" }
+    },
+    "switch": {
+      "pause": { "name": "Pauza" }
+    },
+    "time": {
+      "window_1_start": { "name": "▶1" },
+      "window_1_end":   { "name": "◼1" },
+      "window_2_start": { "name": "▶2" },
+      "window_2_end":   { "name": "◼2" },
+      "window_3_start": { "name": "▶3" },
+      "window_3_end":   { "name": "◼3" },
+      "window_4_start": { "name": "▶4" },
+      "window_4_end":   { "name": "◼4" }
+    }
+  }
+}

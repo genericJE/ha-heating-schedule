@@ -1,0 +1,64 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Programma di riscaldamento",
+        "description": "Per quante stanze vuoi programmare? Puoi modificarlo in seguito rimuovendo e aggiungendo nuovamente l'integrazione.",
+        "data": {
+          "room_count": "Numero di stanze"
+        }
+      },
+      "room": {
+        "title": "Stanza {index} di {total}",
+        "description": "Scegli un nome e l'entità climatica per questa stanza. I sensori facoltativi e la voce finestra alimentano il sottotitolo della temperatura attuale e l'icona di finestra aperta sulla carta.",
+        "data": {
+          "name": "Nome della stanza",
+          "climate_entity": "Entità climatica (obiettivo)",
+          "current_temp_entity": "Sensore di temperatura attuale (opzionale)",
+          "window_entity": "Sensore binario di finestra aperta (opzionale)",
+          "comfort_default": "Temperatura di comfort iniziale",
+          "window_count": "Numero di finestre di riscaldamento"
+        }
+      },
+      "globals": {
+        "title": "Riduzione",
+        "description": "Scegli la temperatura a cui tornare fuori da qualsiasi finestra. L'integrazione crea anche `switch.heating_schedule_pause` — attivalo (da un tile, un'automazione, ovunque) per portare ogni stanza alla riduzione e fermare il programma fino a quando non lo disattivi.",
+        "data": {
+          "setback": "Temperatura di riduzione"
+        }
+      },
+      "summary": {
+        "title": "Aggiungi le carte alla tua dashboard",
+        "description": "Configurazione pronta. Aggiungi la carta come risorsa Lovelace (Impostazioni → Dashboard → Risorse):\n\n- URL `/heating_schedule/heating-window-slider-card.js`\n- Tipo *Modulo JavaScript*\n\nQuindi incolla questo YAML in una vista in stile sections:\n\n```yaml\n{dashboard_yaml}\n```\n\nFai clic su **Invia** per terminare."
+      }
+    },
+    "error": {
+      "name_required": "Inserisci un nome per la stanza."
+    },
+    "abort": {
+      "already_configured": "Programma di riscaldamento già configurato."
+    }
+  },
+  "entity": {
+    "text": {
+      "windows": { "name": "Finestre" }
+    },
+    "number": {
+      "comfort": { "name": "Comfort" },
+      "window_count": { "name": "Finestre" }
+    },
+    "switch": {
+      "pause": { "name": "Pausa" }
+    },
+    "time": {
+      "window_1_start": { "name": "▶1" },
+      "window_1_end":   { "name": "◼1" },
+      "window_2_start": { "name": "▶2" },
+      "window_2_end":   { "name": "◼2" },
+      "window_3_start": { "name": "▶3" },
+      "window_3_end":   { "name": "◼3" },
+      "window_4_start": { "name": "▶4" },
+      "window_4_end":   { "name": "◼4" }
+    }
+  }
+}

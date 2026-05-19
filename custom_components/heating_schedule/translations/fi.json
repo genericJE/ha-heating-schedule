@@ -1,0 +1,64 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Lämmitysaikataulu",
+        "description": "Kuinka monelle huoneelle haluat aikatauluttaa? Voit muuttaa tätä myöhemmin poistamalla integraation ja lisäämällä sen uudelleen.",
+        "data": {
+          "room_count": "Huoneiden määrä"
+        }
+      },
+      "room": {
+        "title": "Huone {index}/{total}",
+        "description": "Valitse nimi ja ilmastoentiteetti tälle huoneelle. Vapaaehtoiset anturit ja ikkunamerkintä syöttävät kortin nykyisen lämpötilan alaotsikon ja avoimen ikkunan kuvakkeen.",
+        "data": {
+          "name": "Huoneen nimi",
+          "climate_entity": "Ilmastoentiteetti (kohde)",
+          "current_temp_entity": "Nykyisen lämpötilan anturi (valinnainen)",
+          "window_entity": "Avoimen ikkunan binäärianturi (valinnainen)",
+          "comfort_default": "Alkulämpötila",
+          "window_count": "Lämmitysikkunoiden määrä"
+        }
+      },
+      "globals": {
+        "title": "Pudotus",
+        "description": "Valitse lämpötila, johon palataan minkä tahansa ikkunan ulkopuolella. Integraatio luo myös `switch.heating_schedule_pause` — kytke se (laatasta, automaatiosta, mistä tahansa) työntääksesi jokaisen huoneen pudotukseen ja pysäyttääksesi aikataulun, kunnes kytket sen takaisin pois.",
+        "data": {
+          "setback": "Pudotuslämpötila"
+        }
+      },
+      "summary": {
+        "title": "Lisää kortit kojelautaan",
+        "description": "Asennus on valmis. Lisää kortti Lovelace-resurssina (Asetukset → Kojelaudat → Resurssit):\n\n- URL `/heating_schedule/heating-window-slider-card.js`\n- Tyyppi *JavaScript-moduuli*\n\nLiitä sitten tämä YAML sections-tyyliseen näkymään:\n\n```yaml\n{dashboard_yaml}\n```\n\nKlikkaa **Lähetä** lopettaaksesi."
+      }
+    },
+    "error": {
+      "name_required": "Anna huoneen nimi."
+    },
+    "abort": {
+      "already_configured": "Lämmitysaikataulu on jo määritetty."
+    }
+  },
+  "entity": {
+    "text": {
+      "windows": { "name": "Ikkunat" }
+    },
+    "number": {
+      "comfort": { "name": "Mukavuus" },
+      "window_count": { "name": "Ikkunat" }
+    },
+    "switch": {
+      "pause": { "name": "Tauko" }
+    },
+    "time": {
+      "window_1_start": { "name": "▶1" },
+      "window_1_end":   { "name": "◼1" },
+      "window_2_start": { "name": "▶2" },
+      "window_2_end":   { "name": "◼2" },
+      "window_3_start": { "name": "▶3" },
+      "window_3_end":   { "name": "◼3" },
+      "window_4_start": { "name": "▶4" },
+      "window_4_end":   { "name": "◼4" }
+    }
+  }
+}

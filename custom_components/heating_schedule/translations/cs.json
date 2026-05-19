@@ -1,0 +1,64 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Plán vytápění",
+        "description": "Pro kolik místností chcete naplánovat? Můžete to později změnit odstraněním a opětovným přidáním integrace.",
+        "data": {
+          "room_count": "Počet místností"
+        }
+      },
+      "room": {
+        "title": "Místnost {index} z {total}",
+        "description": "Vyberte název a klimatickou entitu pro tuto místnost. Volitelné senzory a záznam okna pohánějí podtitul aktuální teploty a ikonu otevřeného okna na kartě.",
+        "data": {
+          "name": "Název místnosti",
+          "climate_entity": "Klimatická entita (cíl)",
+          "current_temp_entity": "Senzor aktuální teploty (volitelný)",
+          "window_entity": "Binární senzor otevřeného okna (volitelný)",
+          "comfort_default": "Počáteční komfortní teplota",
+          "window_count": "Počet topných oken"
+        }
+      },
+      "globals": {
+        "title": "Snížení",
+        "description": "Vyberte teplotu, na kterou se vrátit mimo jakékoli okno. Integrace také vytváří `switch.heating_schedule_pause` — přepněte jej (z dlaždice, automatizace, odkudkoli), abyste přepnuli každou místnost na snížení a zastavili plán, dokud jej znovu nevypnete.",
+        "data": {
+          "setback": "Teplota snížení"
+        }
+      },
+      "summary": {
+        "title": "Přidejte karty na řídicí panel",
+        "description": "Nastavení připraveno. Přidejte kartu jako zdroj Lovelace (Nastavení → Řídicí panely → Zdroje):\n\n- URL `/heating_schedule/heating-window-slider-card.js`\n- Typ *Modul JavaScript*\n\nPoté vložte toto YAML do zobrazení ve stylu sections:\n\n```yaml\n{dashboard_yaml}\n```\n\nKlikněte na **Odeslat** pro dokončení."
+      }
+    },
+    "error": {
+      "name_required": "Zadejte název místnosti."
+    },
+    "abort": {
+      "already_configured": "Plán vytápění je již nakonfigurován."
+    }
+  },
+  "entity": {
+    "text": {
+      "windows": { "name": "Okna" }
+    },
+    "number": {
+      "comfort": { "name": "Komfort" },
+      "window_count": { "name": "Okna" }
+    },
+    "switch": {
+      "pause": { "name": "Pauza" }
+    },
+    "time": {
+      "window_1_start": { "name": "▶1" },
+      "window_1_end":   { "name": "◼1" },
+      "window_2_start": { "name": "▶2" },
+      "window_2_end":   { "name": "◼2" },
+      "window_3_start": { "name": "▶3" },
+      "window_3_end":   { "name": "◼3" },
+      "window_4_start": { "name": "▶4" },
+      "window_4_end":   { "name": "◼4" }
+    }
+  }
+}

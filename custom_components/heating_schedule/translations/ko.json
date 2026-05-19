@@ -1,0 +1,64 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "난방 일정",
+        "description": "몇 개의 방에 대해 일정을 설정하시겠습니까? 통합을 제거한 후 다시 추가하여 나중에 변경할 수 있습니다.",
+        "data": {
+          "room_count": "방 개수"
+        }
+      },
+      "room": {
+        "title": "방 {index}/{total}",
+        "description": "이 방의 이름과 클라이밋 엔티티를 선택하세요. 선택적 센서와 창문 항목은 카드의 현재 온도 부제 및 창문 열림 아이콘을 구동합니다.",
+        "data": {
+          "name": "방 이름",
+          "climate_entity": "클라이밋 엔티티(대상)",
+          "current_temp_entity": "현재 온도 센서(선택사항)",
+          "window_entity": "창문 열림 바이너리 센서(선택사항)",
+          "comfort_default": "초기 쾌적 온도",
+          "window_count": "난방 윈도우 개수"
+        }
+      },
+      "globals": {
+        "title": "설정 해제 온도",
+        "description": "윈도우 외부에서 돌아갈 온도를 선택하세요. 통합은 `switch.heating_schedule_pause`도 만듭니다 — 타일, 자동화, 어디서나 토글하여 각 방을 설정 해제로 밀어 넣고 다시 끌 때까지 일정을 중지합니다.",
+        "data": {
+          "setback": "설정 해제 온도"
+        }
+      },
+      "summary": {
+        "title": "대시보드에 카드 추가",
+        "description": "설정 준비 완료. Lovelace 리소스로 카드를 추가하세요(설정 → 대시보드 → 리소스):\n\n- URL `/heating_schedule/heating-window-slider-card.js`\n- 유형 *JavaScript 모듈*\n\n그런 다음 이 YAML을 sections 스타일 보기에 붙여넣습니다:\n\n```yaml\n{dashboard_yaml}\n```\n\n**제출**을 클릭하여 완료하세요."
+      }
+    },
+    "error": {
+      "name_required": "방 이름을 입력하세요."
+    },
+    "abort": {
+      "already_configured": "난방 일정이 이미 구성되었습니다."
+    }
+  },
+  "entity": {
+    "text": {
+      "windows": { "name": "윈도우" }
+    },
+    "number": {
+      "comfort": { "name": "쾌적" },
+      "window_count": { "name": "윈도우" }
+    },
+    "switch": {
+      "pause": { "name": "일시중지" }
+    },
+    "time": {
+      "window_1_start": { "name": "▶1" },
+      "window_1_end":   { "name": "◼1" },
+      "window_2_start": { "name": "▶2" },
+      "window_2_end":   { "name": "◼2" },
+      "window_3_start": { "name": "▶3" },
+      "window_3_end":   { "name": "◼3" },
+      "window_4_start": { "name": "▶4" },
+      "window_4_end":   { "name": "◼4" }
+    }
+  }
+}
