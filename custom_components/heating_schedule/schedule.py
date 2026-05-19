@@ -307,6 +307,12 @@ class HeatingScheduleController:
         climate_state = self.hass.states.get(room.climate_entity)
         if climate_state is None or is_unusable(climate_state.state):
             return
+        # Respect a user-disabled climate. set_temperature on an off
+        # entity is silently dropped on most platforms (BT included), so
+        # the write would succeed but heat would never come on — leave
+        # the schedule visibly inactive instead.
+        if climate_state.state == STATE_OFF:
+            return
         # Skip while Better Thermostat's window-open frost-protect is
         # active: BT holds its frost target for as long as the window is
         # open, so a write here loses every tick and just generates churn
