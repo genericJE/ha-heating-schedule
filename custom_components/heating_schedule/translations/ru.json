@@ -29,7 +29,7 @@
       },
       "summary": {
         "title": "Добавьте карточки на вашу панель",
-        "description": "Настройка готова. Добавьте карточку как ресурс Lovelace (Настройки → Панели → Ресурсы):\n\n- URL `/heating_schedule/heating-window-slider-card.js`\n- Тип *Модуль JavaScript*\n\nЗатем вставьте этот YAML в представление в стиле sections:\n\n```yaml\n{dashboard_yaml}\n```\n\nНажмите **Отправить** для завершения."
+        "description": "Настройка готова. Добавьте карточку как ресурс Lovelace (Настройки → Панели → Ресурсы):\n\n- URL `/heating_schedule/heating-window-slider-card.js`\n- Тип *Модуль JavaScript*\n\nЗатем вставьте этот YAML в представление в стиле sections:\n\n```yaml\n{dashboard_yaml}\n```\n\nПриведённые выше ID сущностей предполагают формат ID сущностей Home Assistant по умолчанию. Если вы изменили этот формат в настройках сущностей, проверьте ID на устройстве каждой комнаты после настройки.\n\nНажмите **Отправить** для завершения."
       }
     },
     "error": {

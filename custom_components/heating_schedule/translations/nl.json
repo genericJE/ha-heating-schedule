@@ -29,7 +29,7 @@
       },
       "summary": {
         "title": "Voeg de kaarten toe aan je dashboard",
-        "description": "Installatie is klaar. Voeg de kaart toe als Lovelace-bron (Instellingen → Dashboards → Bronnen):\n\n- URL `/heating_schedule/heating-window-slider-card.js`\n- Type *JavaScript-module*\n\nPlak dan deze YAML in een sections-weergave:\n\n```yaml\n{dashboard_yaml}\n```\n\nKlik op **Verzenden** om af te ronden."
+        "description": "Installatie is klaar. Voeg de kaart toe als Lovelace-bron (Instellingen → Dashboards → Bronnen):\n\n- URL `/heating_schedule/heating-window-slider-card.js`\n- Type *JavaScript-module*\n\nPlak dan deze YAML in een sections-weergave:\n\n```yaml\n{dashboard_yaml}\n```\n\nDe entiteits-ID's hierboven gaan uit van het standaardformaat voor entiteits-ID's van Home Assistant. Als je dat formaat in de entiteitsinstellingen hebt gewijzigd, controleer dan na de installatie de ID's op het apparaat van elke kamer.\n\nKlik op **Verzenden** om af te ronden."
       }
     },
     "error": {

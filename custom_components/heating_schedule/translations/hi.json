@@ -29,7 +29,7 @@
       },
       "summary": {
         "title": "अपने डैशबोर्ड में कार्ड जोड़ें",
-        "description": "सेटअप तैयार है। कार्ड को Lovelace संसाधन के रूप में जोड़ें (सेटिंग्स → डैशबोर्ड → संसाधन):\n\n- URL `/heating_schedule/heating-window-slider-card.js`\n- प्रकार *JavaScript मॉड्यूल*\n\nफिर इस YAML को sections-style दृश्य में पेस्ट करें:\n\n```yaml\n{dashboard_yaml}\n```\n\nसमाप्त करने के लिए **सबमिट** पर क्लिक करें।"
+        "description": "सेटअप तैयार है। कार्ड को Lovelace संसाधन के रूप में जोड़ें (सेटिंग्स → डैशबोर्ड → संसाधन):\n\n- URL `/heating_schedule/heating-window-slider-card.js`\n- प्रकार *JavaScript मॉड्यूल*\n\nफिर इस YAML को sections-style दृश्य में पेस्ट करें:\n\n```yaml\n{dashboard_yaml}\n```\n\nऊपर दिए गए एंटिटी ID Home Assistant के डिफ़ॉल्ट एंटिटी ID फ़ॉर्मैट को मानकर चलते हैं। यदि आपने एंटिटी सेटिंग्स में वह फ़ॉर्मैट बदला है, तो सेटअप के बाद हर कमरे के डिवाइस पर ID जाँचें।\n\nसमाप्त करने के लिए **सबमिट** पर क्लिक करें।"
       }
     },
     "error": {

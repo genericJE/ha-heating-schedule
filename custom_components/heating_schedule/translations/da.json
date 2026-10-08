@@ -29,7 +29,7 @@
       },
       "summary": {
         "title": "Tilføj kortene til dit dashboard",
-        "description": "Opsætning er klar. Tilføj kortet som en Lovelace-ressource (Indstillinger → Dashboards → Ressourcer):\n\n- URL `/heating_schedule/heating-window-slider-card.js`\n- Type *JavaScript-modul*\n\nIndsæt derefter denne YAML i en sections-visning:\n\n```yaml\n{dashboard_yaml}\n```\n\nKlik på **Send** for at afslutte."
+        "description": "Opsætning er klar. Tilføj kortet som en Lovelace-ressource (Indstillinger → Dashboards → Ressourcer):\n\n- URL `/heating_schedule/heating-window-slider-card.js`\n- Type *JavaScript-modul*\n\nIndsæt derefter denne YAML i en sections-visning:\n\n```yaml\n{dashboard_yaml}\n```\n\nEntitets-id'erne ovenfor forudsætter Home Assistants standardformat for entitets-id'er. Hvis du har ændret det format i entitetsindstillingerne, så tjek id'erne på hvert rums enhed efter opsætningen.\n\nKlik på **Send** for at afslutte."
       }
     },
     "error": {

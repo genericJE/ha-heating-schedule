@@ -29,7 +29,7 @@
       },
       "summary": {
         "title": "Dodaj karty do panelu",
-        "description": "Konfiguracja gotowa. Dodaj kartę jako zasób Lovelace (Ustawienia → Panele → Zasoby):\n\n- URL `/heating_schedule/heating-window-slider-card.js`\n- Typ *Moduł JavaScript*\n\nNastępnie wklej ten YAML do widoku w stylu sections:\n\n```yaml\n{dashboard_yaml}\n```\n\nKliknij **Wyślij**, aby zakończyć."
+        "description": "Konfiguracja gotowa. Dodaj kartę jako zasób Lovelace (Ustawienia → Panele → Zasoby):\n\n- URL `/heating_schedule/heating-window-slider-card.js`\n- Typ *Moduł JavaScript*\n\nNastępnie wklej ten YAML do widoku w stylu sections:\n\n```yaml\n{dashboard_yaml}\n```\n\nPowyższe identyfikatory encji zakładają domyślny format identyfikatorów encji w Home Assistant. Jeśli ten format został zmieniony w ustawieniach encji, po konfiguracji sprawdź identyfikatory na urządzeniu każdego pokoju.\n\nKliknij **Wyślij**, aby zakończyć."
       }
     },
     "error": {

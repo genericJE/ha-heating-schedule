@@ -29,7 +29,7 @@
       },
       "summary": {
         "title": "カードをダッシュボードに追加",
-        "description": "セットアップ完了。カードをLovelaceリソースとして追加してください(設定 → ダッシュボード → リソース):\n\n- URL `/heating_schedule/heating-window-slider-card.js`\n- タイプ *JavaScriptモジュール*\n\n次に、このYAMLをsectionsスタイルのビューに貼り付けます:\n\n```yaml\n{dashboard_yaml}\n```\n\n**送信**をクリックして完了します。"
+        "description": "セットアップ完了。カードをLovelaceリソースとして追加してください(設定 → ダッシュボード → リソース):\n\n- URL `/heating_schedule/heating-window-slider-card.js`\n- タイプ *JavaScriptモジュール*\n\n次に、このYAMLをsectionsスタイルのビューに貼り付けます:\n\n```yaml\n{dashboard_yaml}\n```\n\n上記のエンティティ ID は Home Assistant のデフォルトのエンティティ ID 形式を前提としています。エンティティ設定でその形式を変更した場合は、セットアップ後に各部屋のデバイスで ID を確認してください。\n\n**送信**をクリックして完了します。"
       }
     },
     "error": {

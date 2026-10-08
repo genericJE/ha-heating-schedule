@@ -29,7 +29,7 @@
       },
       "summary": {
         "title": "Přidejte karty na řídicí panel",
-        "description": "Nastavení připraveno. Přidejte kartu jako zdroj Lovelace (Nastavení → Řídicí panely → Zdroje):\n\n- URL `/heating_schedule/heating-window-slider-card.js`\n- Typ *Modul JavaScript*\n\nPoté vložte toto YAML do zobrazení ve stylu sections:\n\n```yaml\n{dashboard_yaml}\n```\n\nKlikněte na **Odeslat** pro dokončení."
+        "description": "Nastavení připraveno. Přidejte kartu jako zdroj Lovelace (Nastavení → Řídicí panely → Zdroje):\n\n- URL `/heating_schedule/heating-window-slider-card.js`\n- Typ *Modul JavaScript*\n\nPoté vložte toto YAML do zobrazení ve stylu sections:\n\n```yaml\n{dashboard_yaml}\n```\n\nVýše uvedená ID entit předpokládají výchozí formát ID entit v Home Assistantu. Pokud jste tento formát v nastavení entit změnili, zkontrolujte po dokončení nastavení ID na zařízení každé místnosti.\n\nKlikněte na **Odeslat** pro dokončení."
       }
     },
     "error": {

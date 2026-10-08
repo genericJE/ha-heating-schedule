@@ -29,7 +29,7 @@
       },
       "summary": {
         "title": "Füge die Karten zu deinem Dashboard hinzu",
-        "description": "Einrichtung ist bereit. Füge die Karte als Lovelace-Ressource hinzu (Einstellungen → Dashboards → Ressourcen):\n\n- URL `/heating_schedule/heating-window-slider-card.js`\n- Typ *JavaScript-Modul*\n\nDann füge dieses YAML in eine Sections-Ansicht ein:\n\n```yaml\n{dashboard_yaml}\n```\n\nKlicke auf **Senden** zum Abschließen."
+        "description": "Einrichtung ist bereit. Füge die Karte als Lovelace-Ressource hinzu (Einstellungen → Dashboards → Ressourcen):\n\n- URL `/heating_schedule/heating-window-slider-card.js`\n- Typ *JavaScript-Modul*\n\nDann füge dieses YAML in eine Sections-Ansicht ein:\n\n```yaml\n{dashboard_yaml}\n```\n\nDie Entitäts-IDs oben setzen das Standardformat für Entitäts-IDs von Home Assistant voraus. Falls du dieses Format in den Entitätseinstellungen geändert hast, prüfe die IDs nach der Einrichtung auf dem Gerät jedes Raums.\n\nKlicke auf **Senden** zum Abschließen."
       }
     },
     "error": {

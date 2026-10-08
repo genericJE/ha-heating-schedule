@@ -29,7 +29,7 @@
       },
       "summary": {
         "title": "Añade las tarjetas a tu panel",
-        "description": "Configuración lista. Añade la tarjeta como recurso de Lovelace (Configuración → Paneles → Recursos):\n\n- URL `/heating_schedule/heating-window-slider-card.js`\n- Tipo *Módulo JavaScript*\n\nLuego pega este YAML en una vista de estilo sections:\n\n```yaml\n{dashboard_yaml}\n```\n\nHaz clic en **Enviar** para terminar."
+        "description": "Configuración lista. Añade la tarjeta como recurso de Lovelace (Configuración → Paneles → Recursos):\n\n- URL `/heating_schedule/heating-window-slider-card.js`\n- Tipo *Módulo JavaScript*\n\nLuego pega este YAML en una vista de estilo sections:\n\n```yaml\n{dashboard_yaml}\n```\n\nLos ID de entidad anteriores asumen el formato de ID de entidad predeterminado de Home Assistant. Si cambiaste ese formato en los ajustes de entidades, comprueba los ID en el dispositivo de cada habitación tras la configuración.\n\nHaz clic en **Enviar** para terminar."
       }
     },
     "error": {

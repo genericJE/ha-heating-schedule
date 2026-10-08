@@ -29,7 +29,7 @@
       },
       "summary": {
         "title": "将卡片添加到您的仪表板",
-        "description": "设置就绪。将卡片作为 Lovelace 资源添加（设置 → 仪表板 → 资源）：\n\n- URL `/heating_schedule/heating-window-slider-card.js`\n- 类型 *JavaScript 模块*\n\n然后将此 YAML 粘贴到 sections 风格的视图中：\n\n```yaml\n{dashboard_yaml}\n```\n\n点击 **提交** 完成。"
+        "description": "设置就绪。将卡片作为 Lovelace 资源添加（设置 → 仪表板 → 资源）：\n\n- URL `/heating_schedule/heating-window-slider-card.js`\n- 类型 *JavaScript 模块*\n\n然后将此 YAML 粘贴到 sections 风格的视图中：\n\n```yaml\n{dashboard_yaml}\n```\n\n上述实体 ID 假定使用 Home Assistant 的默认实体 ID 格式。如果您在实体设置中更改了该格式，请在设置完成后检查每个房间设备上的 ID。\n\n点击 **提交** 完成。"
       }
     },
     "error": {

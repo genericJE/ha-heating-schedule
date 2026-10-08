@@ -29,7 +29,7 @@
       },
       "summary": {
         "title": "আপনার ড্যাশবোর্ডে কার্ড যোগ করুন",
-        "description": "সেটআপ প্রস্তুত। কার্ডটিকে Lovelace সম্পদ হিসাবে যোগ করুন (সেটিংস → ড্যাশবোর্ড → সম্পদ):\n\n- URL `/heating_schedule/heating-window-slider-card.js`\n- প্রকার *JavaScript মডিউল*\n\nতারপর এই YAML একটি sections-style ভিউতে পেস্ট করুন:\n\n```yaml\n{dashboard_yaml}\n```\n\nশেষ করতে **জমা দিন** ক্লিক করুন।"
+        "description": "সেটআপ প্রস্তুত। কার্ডটিকে Lovelace সম্পদ হিসাবে যোগ করুন (সেটিংস → ড্যাশবোর্ড → সম্পদ):\n\n- URL `/heating_schedule/heating-window-slider-card.js`\n- প্রকার *JavaScript মডিউল*\n\nতারপর এই YAML একটি sections-style ভিউতে পেস্ট করুন:\n\n```yaml\n{dashboard_yaml}\n```\n\nউপরের সত্তা আইডিগুলি Home Assistant-এর ডিফল্ট সত্তা আইডি বিন্যাস ধরে নেয়। আপনি যদি সত্তা সেটিংসে সেই বিন্যাস পরিবর্তন করে থাকেন, তাহলে সেটআপের পরে প্রতিটি কক্ষের ডিভাইসে আইডিগুলি পরীক্ষা করুন।\n\nশেষ করতে **জমা দিন** ক্লিক করুন।"
       }
     },
     "error": {

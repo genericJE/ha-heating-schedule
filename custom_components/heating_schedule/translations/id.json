@@ -29,7 +29,7 @@
       },
       "summary": {
         "title": "Tambahkan kartu ke dasbor Anda",
-        "description": "Pengaturan siap. Tambahkan kartu sebagai sumber daya Lovelace (Pengaturan → Dasbor → Sumber Daya):\n\n- URL `/heating_schedule/heating-window-slider-card.js`\n- Jenis *Modul JavaScript*\n\nLalu tempel YAML ini ke tampilan bergaya sections:\n\n```yaml\n{dashboard_yaml}\n```\n\nKlik **Kirim** untuk selesai."
+        "description": "Pengaturan siap. Tambahkan kartu sebagai sumber daya Lovelace (Pengaturan → Dasbor → Sumber Daya):\n\n- URL `/heating_schedule/heating-window-slider-card.js`\n- Jenis *Modul JavaScript*\n\nLalu tempel YAML ini ke tampilan bergaya sections:\n\n```yaml\n{dashboard_yaml}\n```\n\nID entitas di atas mengasumsikan format ID entitas bawaan Home Assistant. Jika Anda mengubah format tersebut di pengaturan entitas, periksa ID pada perangkat setiap ruangan setelah penyiapan.\n\nKlik **Kirim** untuk selesai."
       }
     },
     "error": {

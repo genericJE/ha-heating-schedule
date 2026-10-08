@@ -29,7 +29,7 @@
       },
       "summary": {
         "title": "Afegeix les targetes al teu tauler",
-        "description": "Configuració llesta. Afegeix la targeta com a recurs Lovelace (Configuració → Taulers → Recursos):\n\n- URL `/heating_schedule/heating-window-slider-card.js`\n- Tipus *Mòdul JavaScript*\n\nLlavors enganxa aquest YAML en una vista d'estil sections:\n\n```yaml\n{dashboard_yaml}\n```\n\nFes clic a **Envia** per acabar."
+        "description": "Configuració llesta. Afegeix la targeta com a recurs Lovelace (Configuració → Taulers → Recursos):\n\n- URL `/heating_schedule/heating-window-slider-card.js`\n- Tipus *Mòdul JavaScript*\n\nLlavors enganxa aquest YAML en una vista d'estil sections:\n\n```yaml\n{dashboard_yaml}\n```\n\nEls ID d'entitat anteriors assumeixen el format d'ID d'entitat per defecte de Home Assistant. Si has canviat aquest format a la configuració d'entitats, comprova els ID al dispositiu de cada habitació després de la configuració.\n\nFes clic a **Envia** per acabar."
       }
     },
     "error": {

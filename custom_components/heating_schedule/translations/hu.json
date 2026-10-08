@@ -29,7 +29,7 @@
       },
       "summary": {
         "title": "Adja hozzá a kártyákat az irányítópulthoz",
-        "description": "A beállítás kész. Adja hozzá a kártyát Lovelace erőforrásként (Beállítások → Irányítópultok → Erőforrások):\n\n- URL `/heating_schedule/heating-window-slider-card.js`\n- Típus *JavaScript modul*\n\nMajd illessze be ezt a YAML-t egy sections stílusú nézetbe:\n\n```yaml\n{dashboard_yaml}\n```\n\nKattintson a **Küldés** gombra a befejezéshez."
+        "description": "A beállítás kész. Adja hozzá a kártyát Lovelace erőforrásként (Beállítások → Irányítópultok → Erőforrások):\n\n- URL `/heating_schedule/heating-window-slider-card.js`\n- Típus *JavaScript modul*\n\nMajd illessze be ezt a YAML-t egy sections stílusú nézetbe:\n\n```yaml\n{dashboard_yaml}\n```\n\nA fenti entitásazonosítók a Home Assistant alapértelmezett entitásazonosító-formátumát feltételezik. Ha ezt a formátumot megváltoztatta az entitásbeállításokban, a beállítás után ellenőrizze az azonosítókat minden szoba eszközén.\n\nKattintson a **Küldés** gombra a befejezéshez."
       }
     },
     "error": {

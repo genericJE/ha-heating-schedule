@@ -29,7 +29,7 @@
       },
       "summary": {
         "title": "Add the cards to your dashboard",
-        "description": "Setup is ready. Add the card as a Lovelace resource (Settings → Dashboards → Resources):\n\n- URL `/heating_schedule/heating-window-slider-card.js`\n- Type *JavaScript module*\n\nThen paste this YAML into a sections-style view:\n\n```yaml\n{dashboard_yaml}\n```\n\nClick **Submit** to finish."
+        "description": "Setup is ready. Add the card as a Lovelace resource (Settings → Dashboards → Resources):\n\n- URL `/heating_schedule/heating-window-slider-card.js`\n- Type *JavaScript module*\n\nThen paste this YAML into a sections-style view:\n\n```yaml\n{dashboard_yaml}\n```\n\nThe entity IDs above assume Home Assistant's default entity ID format. If you changed that format in the entity settings, check the IDs on each room device after setup.\n\nClick **Submit** to finish."
       },
       "add_room": {
         "title": "Add a room",

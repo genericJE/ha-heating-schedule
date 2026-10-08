@@ -29,7 +29,7 @@
       },
       "summary": {
         "title": "Lägg till korten till din instrumentpanel",
-        "description": "Installation klar. Lägg till kortet som en Lovelace-resurs (Inställningar → Instrumentpaneler → Resurser):\n\n- URL `/heating_schedule/heating-window-slider-card.js`\n- Typ *JavaScript-modul*\n\nKlistra sedan in denna YAML i en sections-vy:\n\n```yaml\n{dashboard_yaml}\n```\n\nKlicka på **Skicka** för att slutföra."
+        "description": "Installation klar. Lägg till kortet som en Lovelace-resurs (Inställningar → Instrumentpaneler → Resurser):\n\n- URL `/heating_schedule/heating-window-slider-card.js`\n- Typ *JavaScript-modul*\n\nKlistra sedan in denna YAML i en sections-vy:\n\n```yaml\n{dashboard_yaml}\n```\n\nEntitets-ID:na ovan förutsätter Home Assistants standardformat för entitets-ID:n. Om du har ändrat det formatet i entitetsinställningarna, kontrollera ID:na på varje rums enhet efter installationen.\n\nKlicka på **Skicka** för att slutföra."
       }
     },
     "error": {

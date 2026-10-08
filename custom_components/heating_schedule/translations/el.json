@@ -29,7 +29,7 @@
       },
       "summary": {
         "title": "Προσθέστε τις κάρτες στον πίνακά σας",
-        "description": "Ρύθμιση έτοιμη. Προσθέστε την κάρτα ως πόρο Lovelace (Ρυθμίσεις → Πίνακες → Πόροι):\n\n- URL `/heating_schedule/heating-window-slider-card.js`\n- Τύπος *Μονάδα JavaScript*\n\nΣτη συνέχεια επικολλήστε αυτό το YAML σε προβολή στυλ sections:\n\n```yaml\n{dashboard_yaml}\n```\n\nΚάντε κλικ στο **Υποβολή** για να τελειώσετε."
+        "description": "Ρύθμιση έτοιμη. Προσθέστε την κάρτα ως πόρο Lovelace (Ρυθμίσεις → Πίνακες → Πόροι):\n\n- URL `/heating_schedule/heating-window-slider-card.js`\n- Τύπος *Μονάδα JavaScript*\n\nΣτη συνέχεια επικολλήστε αυτό το YAML σε προβολή στυλ sections:\n\n```yaml\n{dashboard_yaml}\n```\n\nΤα παραπάνω ID οντοτήτων προϋποθέτουν την προεπιλεγμένη μορφή ID οντοτήτων του Home Assistant. Αν αλλάξατε αυτή τη μορφή στις ρυθμίσεις οντοτήτων, ελέγξτε τα ID στη συσκευή κάθε δωματίου μετά τη ρύθμιση.\n\nΚάντε κλικ στο **Υποβολή** για να τελειώσετε."
       }
     },
     "error": {

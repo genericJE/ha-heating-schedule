@@ -29,7 +29,7 @@
       },
       "summary": {
         "title": "Ajoutez les cartes à votre tableau de bord",
-        "description": "Configuration prête. Ajoutez la carte comme ressource Lovelace (Paramètres → Tableaux de bord → Ressources) :\n\n- URL `/heating_schedule/heating-window-slider-card.js`\n- Type *Module JavaScript*\n\nPuis collez ce YAML dans une vue de style sections :\n\n```yaml\n{dashboard_yaml}\n```\n\nCliquez sur **Soumettre** pour terminer."
+        "description": "Configuration prête. Ajoutez la carte comme ressource Lovelace (Paramètres → Tableaux de bord → Ressources) :\n\n- URL `/heating_schedule/heating-window-slider-card.js`\n- Type *Module JavaScript*\n\nPuis collez ce YAML dans une vue de style sections :\n\n```yaml\n{dashboard_yaml}\n```\n\nLes ID d'entité ci-dessus supposent le format d'ID d'entité par défaut de Home Assistant. Si vous avez modifié ce format dans les paramètres des entités, vérifiez les ID sur l'appareil de chaque pièce après la configuration.\n\nCliquez sur **Soumettre** pour terminer."
       }
     },
     "error": {

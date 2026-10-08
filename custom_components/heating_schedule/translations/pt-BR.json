@@ -29,7 +29,7 @@
       },
       "summary": {
         "title": "Adicione os cartões ao seu painel",
-        "description": "Configuração pronta. Adicione o cartão como um recurso Lovelace (Configurações → Painéis → Recursos):\n\n- URL `/heating_schedule/heating-window-slider-card.js`\n- Tipo *Módulo JavaScript*\n\nEntão cole este YAML em uma visualização estilo sections:\n\n```yaml\n{dashboard_yaml}\n```\n\nClique em **Enviar** para terminar."
+        "description": "Configuração pronta. Adicione o cartão como um recurso Lovelace (Configurações → Painéis → Recursos):\n\n- URL `/heating_schedule/heating-window-slider-card.js`\n- Tipo *Módulo JavaScript*\n\nEntão cole este YAML em uma visualização estilo sections:\n\n```yaml\n{dashboard_yaml}\n```\n\nOs IDs de entidade acima pressupõem o formato padrão de ID de entidade do Home Assistant. Se você alterou esse formato nas configurações de entidades, verifique os IDs no dispositivo de cada cômodo após a configuração.\n\nClique em **Enviar** para terminar."
       }
     },
     "error": {

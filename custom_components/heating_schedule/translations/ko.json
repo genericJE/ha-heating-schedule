@@ -29,7 +29,7 @@
       },
       "summary": {
         "title": "대시보드에 카드 추가",
-        "description": "설정 준비 완료. Lovelace 리소스로 카드를 추가하세요(설정 → 대시보드 → 리소스):\n\n- URL `/heating_schedule/heating-window-slider-card.js`\n- 유형 *JavaScript 모듈*\n\n그런 다음 이 YAML을 sections 스타일 보기에 붙여넣습니다:\n\n```yaml\n{dashboard_yaml}\n```\n\n**제출**을 클릭하여 완료하세요."
+        "description": "설정 준비 완료. Lovelace 리소스로 카드를 추가하세요(설정 → 대시보드 → 리소스):\n\n- URL `/heating_schedule/heating-window-slider-card.js`\n- 유형 *JavaScript 모듈*\n\n그런 다음 이 YAML을 sections 스타일 보기에 붙여넣습니다:\n\n```yaml\n{dashboard_yaml}\n```\n\n위의 엔티티 ID는 Home Assistant의 기본 엔티티 ID 형식을 가정합니다. 엔티티 설정에서 해당 형식을 변경했다면 설정 후 각 방 기기에서 ID를 확인하세요.\n\n**제출**을 클릭하여 완료하세요."
       }
     },
     "error": {
