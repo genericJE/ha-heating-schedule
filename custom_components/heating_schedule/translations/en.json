@@ -48,7 +48,6 @@
       "name_required": "Please enter a room name."
     },
     "abort": {
-      "already_configured": "Heating Schedule is already configured.",
       "room_added": "Room added. Heating Schedule is reloading — the new room's entities and card will appear in a moment."
     }
   },

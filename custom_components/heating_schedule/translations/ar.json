@@ -34,9 +34,6 @@
     },
     "error": {
       "name_required": "يرجى إدخال اسم الغرفة."
-    },
-    "abort": {
-      "already_configured": "جدول التدفئة مُهيأ بالفعل."
     }
   },
   "entity": {

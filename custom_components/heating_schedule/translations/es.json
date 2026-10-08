@@ -34,9 +34,6 @@
     },
     "error": {
       "name_required": "Por favor, introduce un nombre de habitación."
-    },
-    "abort": {
-      "already_configured": "Horario de calefacción ya está configurado."
     }
   },
   "entity": {

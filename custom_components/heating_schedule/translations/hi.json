@@ -34,9 +34,6 @@
     },
     "error": {
       "name_required": "कृपया कमरे का नाम दर्ज करें।"
-    },
-    "abort": {
-      "already_configured": "हीटिंग शेड्यूल पहले से कॉन्फ़िगर है।"
     }
   },
   "entity": {

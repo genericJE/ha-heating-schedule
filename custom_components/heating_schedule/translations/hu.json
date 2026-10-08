@@ -34,9 +34,6 @@
     },
     "error": {
       "name_required": "Kérjük, adjon meg egy szoba nevet."
-    },
-    "abort": {
-      "already_configured": "A fűtési ütemterv már be van állítva."
     }
   },
   "entity": {

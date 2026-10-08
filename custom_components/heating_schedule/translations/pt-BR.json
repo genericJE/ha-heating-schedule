@@ -34,9 +34,6 @@
     },
     "error": {
       "name_required": "Por favor, insira um nome para o cômodo."
-    },
-    "abort": {
-      "already_configured": "Programação de aquecimento já está configurada."
     }
   },
   "entity": {

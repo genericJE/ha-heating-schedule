@@ -34,9 +34,6 @@
     },
     "error": {
       "name_required": "Bitte gib einen Raumnamen ein."
-    },
-    "abort": {
-      "already_configured": "Heizplan ist bereits konfiguriert."
     }
   },
   "entity": {

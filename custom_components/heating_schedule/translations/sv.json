@@ -34,9 +34,6 @@
     },
     "error": {
       "name_required": "Ange ett rumsnamn."
-    },
-    "abort": {
-      "already_configured": "Värmeschema är redan konfigurerat."
     }
   },
   "entity": {

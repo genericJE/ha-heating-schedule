@@ -34,9 +34,6 @@
     },
     "error": {
       "name_required": "Vennligst angi et rom-navn."
-    },
-    "abort": {
-      "already_configured": "Varmeplan er allerede konfigurert."
     }
   },
   "entity": {

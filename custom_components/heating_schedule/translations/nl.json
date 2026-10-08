@@ -34,9 +34,6 @@
     },
     "error": {
       "name_required": "Voer een kamernaam in."
-    },
-    "abort": {
-      "already_configured": "Verwarmingsschema is al geconfigureerd."
     }
   },
   "entity": {

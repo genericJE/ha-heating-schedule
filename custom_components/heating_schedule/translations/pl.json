@@ -34,9 +34,6 @@
     },
     "error": {
       "name_required": "Wprowadź nazwę pokoju."
-    },
-    "abort": {
-      "already_configured": "Harmonogram ogrzewania jest już skonfigurowany."
     }
   },
   "entity": {

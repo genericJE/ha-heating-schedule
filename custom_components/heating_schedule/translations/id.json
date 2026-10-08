@@ -34,9 +34,6 @@
     },
     "error": {
       "name_required": "Silakan masukkan nama ruangan."
-    },
-    "abort": {
-      "already_configured": "Jadwal pemanas sudah dikonfigurasi."
     }
   },
   "entity": {

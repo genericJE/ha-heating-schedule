@@ -34,9 +34,6 @@
     },
     "error": {
       "name_required": "Veuillez saisir un nom de pièce."
-    },
-    "abort": {
-      "already_configured": "Programme de chauffage est déjà configuré."
     }
   },
   "entity": {

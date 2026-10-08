@@ -34,9 +34,6 @@
     },
     "error": {
       "name_required": "Anna huoneen nimi."
-    },
-    "abort": {
-      "already_configured": "Lämmitysaikataulu on jo määritetty."
     }
   },
   "entity": {

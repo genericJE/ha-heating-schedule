@@ -34,9 +34,6 @@
     },
     "error": {
       "name_required": "Lütfen bir oda adı girin."
-    },
-    "abort": {
-      "already_configured": "Isıtma programı zaten yapılandırılmış."
     }
   },
   "entity": {

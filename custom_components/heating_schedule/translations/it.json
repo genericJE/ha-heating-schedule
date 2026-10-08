@@ -34,9 +34,6 @@
     },
     "error": {
       "name_required": "Inserisci un nome per la stanza."
-    },
-    "abort": {
-      "already_configured": "Programma di riscaldamento già configurato."
     }
   },
   "entity": {

@@ -34,9 +34,6 @@
     },
     "error": {
       "name_required": "방 이름을 입력하세요."
-    },
-    "abort": {
-      "already_configured": "난방 일정이 이미 구성되었습니다."
     }
   },
   "entity": {

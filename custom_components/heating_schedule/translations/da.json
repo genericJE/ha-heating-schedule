@@ -34,9 +34,6 @@
     },
     "error": {
       "name_required": "Indtast venligst et rumnavn."
-    },
-    "abort": {
-      "already_configured": "Varmeplan er allerede konfigureret."
     }
   },
   "entity": {

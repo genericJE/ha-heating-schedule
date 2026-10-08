@@ -34,9 +34,6 @@
     },
     "error": {
       "name_required": "Si us plau, introdueix un nom d'habitació."
-    },
-    "abort": {
-      "already_configured": "L'horari de calefacció ja està configurat."
     }
   },
   "entity": {

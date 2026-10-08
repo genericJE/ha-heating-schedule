@@ -34,9 +34,6 @@
     },
     "error": {
       "name_required": "请输入房间名称。"
-    },
-    "abort": {
-      "already_configured": "供暖时间表已配置。"
     }
   },
   "entity": {
