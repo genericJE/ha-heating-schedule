@@ -30,10 +30,25 @@
       "summary": {
         "title": "Dodaj karty do panelu",
         "description": "Konfiguracja gotowa. Dodaj kartę jako zasób Lovelace (Ustawienia → Panele → Zasoby):\n\n- URL `/heating_schedule/heating-window-slider-card.js`\n- Typ *Moduł JavaScript*\n\nNastępnie wklej ten YAML do widoku w stylu sections:\n\n```yaml\n{dashboard_yaml}\n```\n\nPowyższe identyfikatory encji zakładają domyślny format identyfikatorów encji w Home Assistant. Jeśli ten format został zmieniony w ustawieniach encji, po konfiguracji sprawdź identyfikatory na urządzeniu każdego pokoju.\n\nKliknij **Wyślij**, aby zakończyć."
+      },
+      "add_room": {
+        "title": "Dodaj pokój",
+        "description": "Twoja instalacja ma już {existing_count} pokój/pokoje. Wypełnij ten, aby dodać go do istniejącego Harmonogramu ogrzewania. Po wysłaniu integracja zostanie przeładowana, a encje nowego pokoju i fragment karty staną się dostępne.",
+        "data": {
+          "name": "Nazwa pokoju",
+          "climate_entity": "Encja klimatu (cel)",
+          "current_temp_entity": "Czujnik aktualnej temperatury (opcjonalny)",
+          "window_entity": "Binarny czujnik otwartego okna (opcjonalny)",
+          "comfort_default": "Początkowa temperatura komfortu",
+          "window_count": "Liczba okien grzewczych"
+        }
       }
     },
     "error": {
       "name_required": "Wprowadź nazwę pokoju."
+    },
+    "abort": {
+      "room_added": "Pokój dodany. Harmonogram ogrzewania jest przeładowywany; encje i karta nowego pokoju pojawią się za chwilę."
     }
   },
   "entity": {

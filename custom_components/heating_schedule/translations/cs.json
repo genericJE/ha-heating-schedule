@@ -30,10 +30,25 @@
       "summary": {
         "title": "Přidejte karty na řídicí panel",
         "description": "Nastavení připraveno. Přidejte kartu jako zdroj Lovelace (Nastavení → Řídicí panely → Zdroje):\n\n- URL `/heating_schedule/heating-window-slider-card.js`\n- Typ *Modul JavaScript*\n\nPoté vložte toto YAML do zobrazení ve stylu sections:\n\n```yaml\n{dashboard_yaml}\n```\n\nVýše uvedená ID entit předpokládají výchozí formát ID entit v Home Assistantu. Pokud jste tento formát v nastavení entit změnili, zkontrolujte po dokončení nastavení ID na zařízení každé místnosti.\n\nKlikněte na **Odeslat** pro dokončení."
+      },
+      "add_room": {
+        "title": "Přidat místnost",
+        "description": "Vaše instalace už má {existing_count} místnost(í). Vyplňte tuto místnost, aby se přidala do stávajícího Plánu vytápění. Po odeslání se integrace znovu načte a entity nové místnosti i úryvek karty budou k dispozici.",
+        "data": {
+          "name": "Název místnosti",
+          "climate_entity": "Klimatická entita (cíl)",
+          "current_temp_entity": "Senzor aktuální teploty (volitelný)",
+          "window_entity": "Binární senzor otevřeného okna (volitelný)",
+          "comfort_default": "Počáteční komfortní teplota",
+          "window_count": "Počet topných oken"
+        }
       }
     },
     "error": {
       "name_required": "Zadejte název místnosti."
+    },
+    "abort": {
+      "room_added": "Místnost přidána. Plán vytápění se znovu načítá; entity a karta nové místnosti se za okamžik objeví."
     }
   },
   "entity": {

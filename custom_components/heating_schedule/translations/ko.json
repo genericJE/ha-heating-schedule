@@ -30,10 +30,25 @@
       "summary": {
         "title": "대시보드에 카드 추가",
         "description": "설정 준비 완료. Lovelace 리소스로 카드를 추가하세요(설정 → 대시보드 → 리소스):\n\n- URL `/heating_schedule/heating-window-slider-card.js`\n- 유형 *JavaScript 모듈*\n\n그런 다음 이 YAML을 sections 스타일 보기에 붙여넣습니다:\n\n```yaml\n{dashboard_yaml}\n```\n\n위의 엔티티 ID는 Home Assistant의 기본 엔티티 ID 형식을 가정합니다. 엔티티 설정에서 해당 형식을 변경했다면 설정 후 각 방 기기에서 ID를 확인하세요.\n\n**제출**을 클릭하여 완료하세요."
+      },
+      "add_room": {
+        "title": "방 추가",
+        "description": "설치에 이미 {existing_count}개의 방이 있습니다. 기존 난방 일정에 추가하려면 이 방을 입력하세요. 제출하면 통합이 다시 로드되고 새 방의 엔티티와 카드 스니펫을 사용할 수 있게 됩니다.",
+        "data": {
+          "name": "방 이름",
+          "climate_entity": "클라이밋 엔티티(대상)",
+          "current_temp_entity": "현재 온도 센서(선택사항)",
+          "window_entity": "창문 열림 바이너리 센서(선택사항)",
+          "comfort_default": "초기 쾌적 온도",
+          "window_count": "난방 윈도우 개수"
+        }
       }
     },
     "error": {
       "name_required": "방 이름을 입력하세요."
+    },
+    "abort": {
+      "room_added": "방이 추가되었습니다. 난방 일정을 다시 로드하는 중입니다. 새 방의 엔티티와 카드가 잠시 후 표시됩니다."
     }
   },
   "entity": {

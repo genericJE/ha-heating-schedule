@@ -30,10 +30,25 @@
       "summary": {
         "title": "Añade las tarjetas a tu panel",
         "description": "Configuración lista. Añade la tarjeta como recurso de Lovelace (Configuración → Paneles → Recursos):\n\n- URL `/heating_schedule/heating-window-slider-card.js`\n- Tipo *Módulo JavaScript*\n\nLuego pega este YAML en una vista de estilo sections:\n\n```yaml\n{dashboard_yaml}\n```\n\nLos ID de entidad anteriores asumen el formato de ID de entidad predeterminado de Home Assistant. Si cambiaste ese formato en los ajustes de entidades, comprueba los ID en el dispositivo de cada habitación tras la configuración.\n\nHaz clic en **Enviar** para terminar."
+      },
+      "add_room": {
+        "title": "Añadir una habitación",
+        "description": "Tu instalación ya tiene {existing_count} habitación(es). Rellena esta para añadirla al Horario de calefacción existente. Tras enviar, la integración se recarga y las entidades de la nueva habitación y el fragmento de tarjeta quedan disponibles.",
+        "data": {
+          "name": "Nombre de la habitación",
+          "climate_entity": "Entidad climática (objetivo)",
+          "current_temp_entity": "Sensor de temperatura actual (opcional)",
+          "window_entity": "Sensor binario de ventana abierta (opcional)",
+          "comfort_default": "Temperatura de confort inicial",
+          "window_count": "Número de ventanas de calefacción"
+        }
       }
     },
     "error": {
       "name_required": "Por favor, introduce un nombre de habitación."
+    },
+    "abort": {
+      "room_added": "Habitación añadida. El Horario de calefacción se está recargando; las entidades y la tarjeta de la nueva habitación aparecerán en un momento."
     }
   },
   "entity": {

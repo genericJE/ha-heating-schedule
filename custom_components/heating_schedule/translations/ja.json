@@ -30,10 +30,25 @@
       "summary": {
         "title": "カードをダッシュボードに追加",
         "description": "セットアップ完了。カードをLovelaceリソースとして追加してください(設定 → ダッシュボード → リソース):\n\n- URL `/heating_schedule/heating-window-slider-card.js`\n- タイプ *JavaScriptモジュール*\n\n次に、このYAMLをsectionsスタイルのビューに貼り付けます:\n\n```yaml\n{dashboard_yaml}\n```\n\n上記のエンティティ ID は Home Assistant のデフォルトのエンティティ ID 形式を前提としています。エンティティ設定でその形式を変更した場合は、セットアップ後に各部屋のデバイスで ID を確認してください。\n\n**送信**をクリックして完了します。"
+      },
+      "add_room": {
+        "title": "部屋を追加",
+        "description": "このインストールには既に {existing_count} 部屋があります。既存の暖房スケジュールに追加するには、この部屋を入力してください。送信後、統合が再読み込みされ、新しい部屋のエンティティとカードのスニペットが利用可能になります。",
+        "data": {
+          "name": "部屋の名前",
+          "climate_entity": "気候エンティティ(ターゲット)",
+          "current_temp_entity": "現在の温度センサー(オプション)",
+          "window_entity": "窓開きバイナリセンサー(オプション)",
+          "comfort_default": "初期快適温度",
+          "window_count": "暖房ウィンドウの数"
+        }
       }
     },
     "error": {
       "name_required": "部屋の名前を入力してください。"
+    },
+    "abort": {
+      "room_added": "部屋を追加しました。暖房スケジュールを再読み込みしています。新しい部屋のエンティティとカードはまもなく表示されます。"
     }
   },
   "entity": {

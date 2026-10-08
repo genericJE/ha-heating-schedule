@@ -30,10 +30,25 @@
       "summary": {
         "title": "Kartları panonuza ekleyin",
         "description": "Kurulum hazır. Kartı bir Lovelace kaynağı olarak ekleyin (Ayarlar → Panolar → Kaynaklar):\n\n- URL `/heating_schedule/heating-window-slider-card.js`\n- Tür *JavaScript modülü*\n\nArdından bu YAML'ı sections stili bir görünüme yapıştırın:\n\n```yaml\n{dashboard_yaml}\n```\n\nYukarıdaki varlık kimlikleri Home Assistant'ın varsayılan varlık kimliği biçimini varsayar. Bu biçimi varlık ayarlarında değiştirdiyseniz, kurulumdan sonra her odanın cihazındaki kimlikleri kontrol edin.\n\nBitirmek için **Gönder**'e tıklayın."
+      },
+      "add_room": {
+        "title": "Oda ekle",
+        "description": "Kurulumunuzda zaten {existing_count} oda var. Mevcut Isıtma programına eklemek için bu odayı doldurun. Gönderdikten sonra entegrasyon yeniden yüklenir ve yeni odanın varlıkları ile kart parçacığı kullanılabilir hale gelir.",
+        "data": {
+          "name": "Oda adı",
+          "climate_entity": "İklim varlığı (hedef)",
+          "current_temp_entity": "Mevcut sıcaklık sensörü (isteğe bağlı)",
+          "window_entity": "Açık pencere ikili sensörü (isteğe bağlı)",
+          "comfort_default": "Başlangıç konfor sıcaklığı",
+          "window_count": "Isıtma pencerelerinin sayısı"
+        }
       }
     },
     "error": {
       "name_required": "Lütfen bir oda adı girin."
+    },
+    "abort": {
+      "room_added": "Oda eklendi. Isıtma programı yeniden yükleniyor; yeni odanın varlıkları ve kartı birazdan görünecek."
     }
   },
   "entity": {

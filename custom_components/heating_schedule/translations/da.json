@@ -30,10 +30,25 @@
       "summary": {
         "title": "Tilføj kortene til dit dashboard",
         "description": "Opsætning er klar. Tilføj kortet som en Lovelace-ressource (Indstillinger → Dashboards → Ressourcer):\n\n- URL `/heating_schedule/heating-window-slider-card.js`\n- Type *JavaScript-modul*\n\nIndsæt derefter denne YAML i en sections-visning:\n\n```yaml\n{dashboard_yaml}\n```\n\nEntitets-id'erne ovenfor forudsætter Home Assistants standardformat for entitets-id'er. Hvis du har ændret det format i entitetsindstillingerne, så tjek id'erne på hvert rums enhed efter opsætningen.\n\nKlik på **Send** for at afslutte."
+      },
+      "add_room": {
+        "title": "Tilføj et rum",
+        "description": "Din installation har allerede {existing_count} rum. Udfyld dette for at føje det til den eksisterende Varmeplan. Efter indsendelse genindlæses integrationen, og det nye rums entiteter og kortudsnit bliver tilgængelige.",
+        "data": {
+          "name": "Rumnavn",
+          "climate_entity": "Klimaentitet (mål)",
+          "current_temp_entity": "Nuværende temperatursensor (valgfri)",
+          "window_entity": "Binær sensor for åbent vindue (valgfri)",
+          "comfort_default": "Initial komforttemperatur",
+          "window_count": "Antal varmevinduer"
+        }
       }
     },
     "error": {
       "name_required": "Indtast venligst et rumnavn."
+    },
+    "abort": {
+      "room_added": "Rum tilføjet. Varmeplan genindlæses; det nye rums entiteter og kort vises om et øjeblik."
     }
   },
   "entity": {

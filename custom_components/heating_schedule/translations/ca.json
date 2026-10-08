@@ -30,10 +30,25 @@
       "summary": {
         "title": "Afegeix les targetes al teu tauler",
         "description": "Configuració llesta. Afegeix la targeta com a recurs Lovelace (Configuració → Taulers → Recursos):\n\n- URL `/heating_schedule/heating-window-slider-card.js`\n- Tipus *Mòdul JavaScript*\n\nLlavors enganxa aquest YAML en una vista d'estil sections:\n\n```yaml\n{dashboard_yaml}\n```\n\nEls ID d'entitat anteriors assumeixen el format d'ID d'entitat per defecte de Home Assistant. Si has canviat aquest format a la configuració d'entitats, comprova els ID al dispositiu de cada habitació després de la configuració.\n\nFes clic a **Envia** per acabar."
+      },
+      "add_room": {
+        "title": "Afegeix una habitació",
+        "description": "La teva instal·lació ja té {existing_count} habitació(ns). Omple aquesta per afegir-la a l'Horari de calefacció existent. Després d'enviar, la integració es recarrega i les entitats de la nova habitació i el fragment de targeta queden disponibles.",
+        "data": {
+          "name": "Nom de l'habitació",
+          "climate_entity": "Entitat de clima (objectiu)",
+          "current_temp_entity": "Sensor de temperatura actual (opcional)",
+          "window_entity": "Sensor binari de finestra oberta (opcional)",
+          "comfort_default": "Temperatura de confort inicial",
+          "window_count": "Nombre de finestres de calefacció"
+        }
       }
     },
     "error": {
       "name_required": "Si us plau, introdueix un nom d'habitació."
+    },
+    "abort": {
+      "room_added": "Habitació afegida. L'Horari de calefacció s'està recarregant; les entitats i la targeta de la nova habitació apareixeran en un moment."
     }
   },
   "entity": {

@@ -30,10 +30,25 @@
       "summary": {
         "title": "Füge die Karten zu deinem Dashboard hinzu",
         "description": "Einrichtung ist bereit. Füge die Karte als Lovelace-Ressource hinzu (Einstellungen → Dashboards → Ressourcen):\n\n- URL `/heating_schedule/heating-window-slider-card.js`\n- Typ *JavaScript-Modul*\n\nDann füge dieses YAML in eine Sections-Ansicht ein:\n\n```yaml\n{dashboard_yaml}\n```\n\nDie Entitäts-IDs oben setzen das Standardformat für Entitäts-IDs von Home Assistant voraus. Falls du dieses Format in den Entitätseinstellungen geändert hast, prüfe die IDs nach der Einrichtung auf dem Gerät jedes Raums.\n\nKlicke auf **Senden** zum Abschließen."
+      },
+      "add_room": {
+        "title": "Raum hinzufügen",
+        "description": "Deine Installation hat bereits {existing_count} Raum/Räume. Fülle diesen aus, um ihn zum bestehenden Heizplan hinzuzufügen. Nach dem Senden wird die Integration neu geladen, und die Entitäten des neuen Raums sowie der Karten-Schnipsel stehen bereit.",
+        "data": {
+          "name": "Raumname",
+          "climate_entity": "Klimaentität (Ziel)",
+          "current_temp_entity": "Aktueller Temperatursensor (optional)",
+          "window_entity": "Binärsensor für offenes Fenster (optional)",
+          "comfort_default": "Initiale Komforttemperatur",
+          "window_count": "Anzahl der Heizfenster"
+        }
       }
     },
     "error": {
       "name_required": "Bitte gib einen Raumnamen ein."
+    },
+    "abort": {
+      "room_added": "Raum hinzugefügt. Der Heizplan wird neu geladen; die Entitäten und die Karte des neuen Raums erscheinen gleich."
     }
   },
   "entity": {

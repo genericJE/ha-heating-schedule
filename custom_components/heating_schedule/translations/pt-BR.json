@@ -30,10 +30,25 @@
       "summary": {
         "title": "Adicione os cartões ao seu painel",
         "description": "Configuração pronta. Adicione o cartão como um recurso Lovelace (Configurações → Painéis → Recursos):\n\n- URL `/heating_schedule/heating-window-slider-card.js`\n- Tipo *Módulo JavaScript*\n\nEntão cole este YAML em uma visualização estilo sections:\n\n```yaml\n{dashboard_yaml}\n```\n\nOs IDs de entidade acima pressupõem o formato padrão de ID de entidade do Home Assistant. Se você alterou esse formato nas configurações de entidades, verifique os IDs no dispositivo de cada cômodo após a configuração.\n\nClique em **Enviar** para terminar."
+      },
+      "add_room": {
+        "title": "Adicionar um cômodo",
+        "description": "Sua instalação já tem {existing_count} cômodo(s). Preencha este para adicioná-lo à Programação de aquecimento existente. Após enviar, a integração é recarregada e as entidades do novo cômodo e o trecho do cartão ficam disponíveis.",
+        "data": {
+          "name": "Nome do cômodo",
+          "climate_entity": "Entidade de clima (alvo)",
+          "current_temp_entity": "Sensor de temperatura atual (opcional)",
+          "window_entity": "Sensor binário de janela aberta (opcional)",
+          "comfort_default": "Temperatura de conforto inicial",
+          "window_count": "Número de janelas de aquecimento"
+        }
       }
     },
     "error": {
       "name_required": "Por favor, insira um nome para o cômodo."
+    },
+    "abort": {
+      "room_added": "Cômodo adicionado. A Programação de aquecimento está recarregando; as entidades e o cartão do novo cômodo aparecerão em instantes."
     }
   },
   "entity": {

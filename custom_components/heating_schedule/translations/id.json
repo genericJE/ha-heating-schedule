@@ -30,10 +30,25 @@
       "summary": {
         "title": "Tambahkan kartu ke dasbor Anda",
         "description": "Pengaturan siap. Tambahkan kartu sebagai sumber daya Lovelace (Pengaturan → Dasbor → Sumber Daya):\n\n- URL `/heating_schedule/heating-window-slider-card.js`\n- Jenis *Modul JavaScript*\n\nLalu tempel YAML ini ke tampilan bergaya sections:\n\n```yaml\n{dashboard_yaml}\n```\n\nID entitas di atas mengasumsikan format ID entitas bawaan Home Assistant. Jika Anda mengubah format tersebut di pengaturan entitas, periksa ID pada perangkat setiap ruangan setelah penyiapan.\n\nKlik **Kirim** untuk selesai."
+      },
+      "add_room": {
+        "title": "Tambah ruangan",
+        "description": "Instalasi Anda sudah memiliki {existing_count} ruangan. Isi ruangan ini untuk menambahkannya ke Jadwal pemanas yang ada. Setelah dikirim, integrasi dimuat ulang dan entitas ruangan baru serta cuplikan kartu menjadi tersedia.",
+        "data": {
+          "name": "Nama ruangan",
+          "climate_entity": "Entitas iklim (target)",
+          "current_temp_entity": "Sensor suhu saat ini (opsional)",
+          "window_entity": "Sensor biner jendela terbuka (opsional)",
+          "comfort_default": "Suhu kenyamanan awal",
+          "window_count": "Jumlah jendela pemanas"
+        }
       }
     },
     "error": {
       "name_required": "Silakan masukkan nama ruangan."
+    },
+    "abort": {
+      "room_added": "Ruangan ditambahkan. Jadwal pemanas sedang dimuat ulang; entitas dan kartu ruangan baru akan muncul sebentar lagi."
     }
   },
   "entity": {

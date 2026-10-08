@@ -30,10 +30,25 @@
       "summary": {
         "title": "Voeg de kaarten toe aan je dashboard",
         "description": "Installatie is klaar. Voeg de kaart toe als Lovelace-bron (Instellingen → Dashboards → Bronnen):\n\n- URL `/heating_schedule/heating-window-slider-card.js`\n- Type *JavaScript-module*\n\nPlak dan deze YAML in een sections-weergave:\n\n```yaml\n{dashboard_yaml}\n```\n\nDe entiteits-ID's hierboven gaan uit van het standaardformaat voor entiteits-ID's van Home Assistant. Als je dat formaat in de entiteitsinstellingen hebt gewijzigd, controleer dan na de installatie de ID's op het apparaat van elke kamer.\n\nKlik op **Verzenden** om af te ronden."
+      },
+      "add_room": {
+        "title": "Een kamer toevoegen",
+        "description": "Je installatie heeft al {existing_count} kamer(s). Vul deze in om hem aan het bestaande Verwarmingsschema toe te voegen. Na het verzenden wordt de integratie opnieuw geladen en komen de entiteiten van de nieuwe kamer en het kaartfragment beschikbaar.",
+        "data": {
+          "name": "Naam van de kamer",
+          "climate_entity": "Klimaatentiteit (doel)",
+          "current_temp_entity": "Huidige temperatuursensor (optioneel)",
+          "window_entity": "Binaire sensor voor open raam (optioneel)",
+          "comfort_default": "Initiële comforttemperatuur",
+          "window_count": "Aantal verwarmingsvensters"
+        }
       }
     },
     "error": {
       "name_required": "Voer een kamernaam in."
+    },
+    "abort": {
+      "room_added": "Kamer toegevoegd. Het Verwarmingsschema wordt opnieuw geladen; de entiteiten en kaart van de nieuwe kamer verschijnen zo."
     }
   },
   "entity": {

@@ -30,10 +30,25 @@
       "summary": {
         "title": "Lisää kortit kojelautaan",
         "description": "Asennus on valmis. Lisää kortti Lovelace-resurssina (Asetukset → Kojelaudat → Resurssit):\n\n- URL `/heating_schedule/heating-window-slider-card.js`\n- Tyyppi *JavaScript-moduuli*\n\nLiitä sitten tämä YAML sections-tyyliseen näkymään:\n\n```yaml\n{dashboard_yaml}\n```\n\nYllä olevat entiteetti-ID:t olettavat Home Assistantin oletusarvoisen entiteetti-ID-muodon. Jos muutit tätä muotoa entiteettiasetuksissa, tarkista ID:t jokaisen huoneen laitteelta asennuksen jälkeen.\n\nKlikkaa **Lähetä** lopettaaksesi."
+      },
+      "add_room": {
+        "title": "Lisää huone",
+        "description": "Asennuksessasi on jo {existing_count} huonetta. Täytä tämä lisätäksesi sen olemassa olevaan Lämmitysaikatauluun. Lähettämisen jälkeen integraatio ladataan uudelleen, ja uuden huoneen entiteetit sekä korttikatkelma tulevat saataville.",
+        "data": {
+          "name": "Huoneen nimi",
+          "climate_entity": "Ilmastoentiteetti (kohde)",
+          "current_temp_entity": "Nykyisen lämpötilan anturi (valinnainen)",
+          "window_entity": "Avoimen ikkunan binäärianturi (valinnainen)",
+          "comfort_default": "Alkulämpötila",
+          "window_count": "Lämmitysikkunoiden määrä"
+        }
       }
     },
     "error": {
       "name_required": "Anna huoneen nimi."
+    },
+    "abort": {
+      "room_added": "Huone lisätty. Lämmitysaikataulu latautuu uudelleen; uuden huoneen entiteetit ja kortti ilmestyvät hetken kuluttua."
     }
   },
   "entity": {

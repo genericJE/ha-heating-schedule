@@ -30,10 +30,25 @@
       "summary": {
         "title": "将卡片添加到您的仪表板",
         "description": "设置就绪。将卡片作为 Lovelace 资源添加（设置 → 仪表板 → 资源）：\n\n- URL `/heating_schedule/heating-window-slider-card.js`\n- 类型 *JavaScript 模块*\n\n然后将此 YAML 粘贴到 sections 风格的视图中：\n\n```yaml\n{dashboard_yaml}\n```\n\n上述实体 ID 假定使用 Home Assistant 的默认实体 ID 格式。如果您在实体设置中更改了该格式，请在设置完成后检查每个房间设备上的 ID。\n\n点击 **提交** 完成。"
+      },
+      "add_room": {
+        "title": "添加房间",
+        "description": "您的安装中已有 {existing_count} 个房间。填写此房间以将其添加到现有的供暖时间表。提交后，集成会重新加载，新房间的实体和卡片片段即可使用。",
+        "data": {
+          "name": "房间名称",
+          "climate_entity": "气候实体（目标）",
+          "current_temp_entity": "当前温度传感器（可选）",
+          "window_entity": "开窗二元传感器（可选）",
+          "comfort_default": "初始舒适温度",
+          "window_count": "供暖时段数量"
+        }
       }
     },
     "error": {
       "name_required": "请输入房间名称。"
+    },
+    "abort": {
+      "room_added": "房间已添加。供暖时间表正在重新加载；新房间的实体和卡片稍后即会显示。"
     }
   },
   "entity": {

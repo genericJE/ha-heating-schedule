@@ -30,10 +30,25 @@
       "summary": {
         "title": "Ajoutez les cartes à votre tableau de bord",
         "description": "Configuration prête. Ajoutez la carte comme ressource Lovelace (Paramètres → Tableaux de bord → Ressources) :\n\n- URL `/heating_schedule/heating-window-slider-card.js`\n- Type *Module JavaScript*\n\nPuis collez ce YAML dans une vue de style sections :\n\n```yaml\n{dashboard_yaml}\n```\n\nLes ID d'entité ci-dessus supposent le format d'ID d'entité par défaut de Home Assistant. Si vous avez modifié ce format dans les paramètres des entités, vérifiez les ID sur l'appareil de chaque pièce après la configuration.\n\nCliquez sur **Soumettre** pour terminer."
+      },
+      "add_room": {
+        "title": "Ajouter une pièce",
+        "description": "Votre installation compte déjà {existing_count} pièce(s). Renseignez celle-ci pour l'ajouter au Programme de chauffage existant. Après envoi, l'intégration se recharge et les entités de la nouvelle pièce ainsi que l'extrait de carte deviennent disponibles.",
+        "data": {
+          "name": "Nom de la pièce",
+          "climate_entity": "Entité climatique (cible)",
+          "current_temp_entity": "Capteur de température actuelle (facultatif)",
+          "window_entity": "Capteur binaire d'ouverture de fenêtre (facultatif)",
+          "comfort_default": "Température de confort initiale",
+          "window_count": "Nombre de fenêtres de chauffage"
+        }
       }
     },
     "error": {
       "name_required": "Veuillez saisir un nom de pièce."
+    },
+    "abort": {
+      "room_added": "Pièce ajoutée. Le Programme de chauffage se recharge ; les entités et la carte de la nouvelle pièce apparaîtront dans un instant."
     }
   },
   "entity": {

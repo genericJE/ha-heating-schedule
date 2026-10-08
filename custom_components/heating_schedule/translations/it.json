@@ -30,10 +30,25 @@
       "summary": {
         "title": "Aggiungi le carte alla tua dashboard",
         "description": "Configurazione pronta. Aggiungi la carta come risorsa Lovelace (Impostazioni → Dashboard → Risorse):\n\n- URL `/heating_schedule/heating-window-slider-card.js`\n- Tipo *Modulo JavaScript*\n\nQuindi incolla questo YAML in una vista in stile sections:\n\n```yaml\n{dashboard_yaml}\n```\n\nGli ID entità qui sopra presuppongono il formato ID entità predefinito di Home Assistant. Se hai cambiato quel formato nelle impostazioni delle entità, controlla gli ID sul dispositivo di ogni stanza dopo la configurazione.\n\nFai clic su **Invia** per terminare."
+      },
+      "add_room": {
+        "title": "Aggiungi una stanza",
+        "description": "La tua installazione ha già {existing_count} stanza/e. Compila questa per aggiungerla al Programma di riscaldamento esistente. Dopo l'invio, l'integrazione si ricarica e le entità della nuova stanza e il frammento di carta diventano disponibili.",
+        "data": {
+          "name": "Nome della stanza",
+          "climate_entity": "Entità climatica (obiettivo)",
+          "current_temp_entity": "Sensore di temperatura attuale (opzionale)",
+          "window_entity": "Sensore binario di finestra aperta (opzionale)",
+          "comfort_default": "Temperatura di comfort iniziale",
+          "window_count": "Numero di finestre di riscaldamento"
+        }
       }
     },
     "error": {
       "name_required": "Inserisci un nome per la stanza."
+    },
+    "abort": {
+      "room_added": "Stanza aggiunta. Il Programma di riscaldamento si sta ricaricando; le entità e la carta della nuova stanza appariranno tra un momento."
     }
   },
   "entity": {
