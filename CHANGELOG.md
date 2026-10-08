@@ -2,7 +2,7 @@
 
 All notable changes to this project are documented here. Versioning follows [Semantic Versioning](https://semver.org/).
 
-## [0.2.0] — 2026-10-08
+## [0.2.0] - 2026-10-08
 
 ### Changed
 
@@ -25,7 +25,7 @@ All notable changes to this project are documented here. Versioning follows [Sem
 
 - Home Assistant 2024.7 or later.
 
-## [0.1.1] — 2026-05-19
+## [0.1.1] - 2026-05-19
 
 Re-cut of 0.1.0 for the HACS default submission, so the release sits on a validated workflow run. The manifest still reported 0.1.0.
 
@@ -44,7 +44,7 @@ Re-cut of 0.1.0 for the HACS default submission, so the release sits on a valida
 
 - Setback entity ID is no longer double-prefixed.
 
-## [0.1.0] — 2026-05-19
+## [0.1.0] - 2026-05-19
 
 First public release. HACS submission pending.
 
