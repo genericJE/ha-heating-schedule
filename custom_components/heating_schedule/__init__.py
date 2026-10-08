@@ -4,7 +4,12 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from homeassistant.components.http import StaticPathConfig
+# Core integrations import StaticPathConfig from this public path, but the
+# package re-exports it without listing it in __all__, so pyright flags it.
+# The submodule it lives in today did not exist at our 2024.7 floor.
+from homeassistant.components.http import (
+    StaticPathConfig,  # pyright: ignore[reportPrivateImportUsage]
+)
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import entity_registry as er

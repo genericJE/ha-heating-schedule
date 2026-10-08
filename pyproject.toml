@@ -4,7 +4,7 @@ version = "0.1.0"
 description = "Per-room heating schedule integration and card for Home Assistant"
 license = "MIT"
 license-files = ["LICENSE"]
-requires-python = ">=3.13,<3.14"
+requires-python = ">=3.14.2,<3.15"
 dependencies = [
     "homeassistant>=2024.7.0",
 ]
@@ -16,11 +16,11 @@ build-backend = "hatchling.build"
 [tool.hatch.build.targets.wheel]
 packages = ["custom_components/heating_schedule"]
 
-[tool.uv]
-dev-dependencies = [
+[dependency-groups]
+dev = [
     "pyright>=1.1.400",
     "ruff>=0.11",
-    "pytest-homeassistant-custom-component>=0.13",
+    "pytest-homeassistant-custom-component>=0.13.367",
 ]
 
 [tool.ruff]
@@ -47,7 +47,7 @@ ignore = [
 
 [tool.pyright]
 typeCheckingMode = "basic"
-pythonVersion = "3.13"
+pythonVersion = "3.14"
 include = ["custom_components"]
 
 [tool.pytest.ini_options]
