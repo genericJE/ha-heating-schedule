@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+from collections.abc import Coroutine
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from typing import TYPE_CHECKING, Any
@@ -190,15 +191,34 @@ class HeatingScheduleController:
         self._hide_text_entities_on_first_run()
 
         if self.hass.is_running:
-            self.hass.async_create_task(self._evaluate_all_after_settle())
+            self._spawn_delayed(self._evaluate_all_after_settle(), "settle")
         # else: HA still booting; EVENT_HOMEASSISTANT_STARTED handler will fire.
 
     async def async_stop(self) -> None:
-        """Cancel all subscriptions."""
+        """Cancel all subscriptions.
+
+        Pending settle/snapshot delays are entry background tasks, so the
+        config entry cancels them itself on unload (and HA does on stop).
+        """
         await self._pause_sync.async_stop()
         for unsub in self._unsub_callbacks:
             unsub()
         self._unsub_callbacks.clear()
+
+    def _spawn_delayed(self, coro: Coroutine[Any, Any, None], name: str) -> None:
+        """Run a sleeping coroutine as a background task tied to the entry.
+
+        The settle and snapshot paths sleep for seconds before writing to
+        the climates. As plain hass tasks they outlived async_stop: a reload
+        let the old controller push targets after unload, and at shutdown HA
+        warned that the task was still running after the final-writes stage.
+        Entry background tasks are cancelled on unload and on HA stop, and
+        async_block_till_done doesn't wait for them, which is right for a
+        delay nobody should be blocked on.
+        """
+        self.entry.async_create_background_task(
+            self.hass, coro, name=f"{DOMAIN}.{name}", eager_start=True
+        )
 
     # ── triggers ──────────────────────────────────────────────────────────
 
@@ -289,14 +309,14 @@ class HeatingScheduleController:
             # Brief delay then push setback so a peer automation snapshotting
             # the climates on the same boolean edge (Apply Heating Pause's
             # scene.create) captures pre-pause state before we lower it.
-            self.hass.async_create_task(self._apply_setback_all_after_snapshot())
+            self._spawn_delayed(self._apply_setback_all_after_snapshot(), "snapshot")
         elif old.state == STATE_ON and new.state == STATE_OFF:
             # 5s settle then re-evaluate from schedule + comfort.
-            self.hass.async_create_task(self._evaluate_all_after_settle())
+            self._spawn_delayed(self._evaluate_all_after_settle(), "settle")
 
     @callback
     def _on_ha_started(self, _event: Event) -> None:
-        self.hass.async_create_task(self._evaluate_all_after_settle())
+        self._spawn_delayed(self._evaluate_all_after_settle(), "settle")
 
     # ── evaluation ────────────────────────────────────────────────────────
 
