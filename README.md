@@ -24,7 +24,7 @@ A per-room heating schedule for Home Assistant. Each room gets a card with a 24-
 
 ## Requirements
 
-- Home Assistant 2024.x or later (the card uses `ha-icon` and the automation uses the modern `triggers:` / `actions:` keys, plus the `from_json` filter).
+- Home Assistant 2024.7 or later. The integration serves its card through the async static-path API that first shipped in 2024.7; the example automation uses the modern `triggers:` / `actions:` keys plus the `from_json` filter.
 - One `climate` entity per room that accepts `set_temperature` — any climate integration works (Better Thermostat, generic_thermostat, MQTT HVAC, native Zigbee TRV climates, etc.). I happen to use [Better Thermostat](https://github.com/KartoffelToby/better_thermostat) over Zigbee TRVs, which is why the install notes occasionally reference it.
 - Optional but recommended: per-room temperature sensor and window-opening binary sensor.
 
