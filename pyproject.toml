@@ -1,6 +1,6 @@
 [project]
 name = "ha-heating-schedule"
-version = "0.1.0"
+version = "0.2.0"
 description = "Per-room heating schedule integration and card for Home Assistant"
 license = "MIT"
 license-files = ["LICENSE"]

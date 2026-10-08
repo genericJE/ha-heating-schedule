@@ -2,7 +2,7 @@
 
 All notable changes to this project are documented here. Versioning follows [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [0.2.0] — 2026-10-08
 
 ### Changed
 
@@ -14,11 +14,35 @@ All notable changes to this project are documented here. Versioning follows [Sem
 ### Fixed
 
 - The 25 non-English translations gained the add-room step and the `room_added` abort text, which had only existed in English.
+- Tests register `climate.set_temperature` themselves, so the suite no longer depends on the wall clock.
 - The settle and pause-snapshot delays are entry background tasks. They are cancelled on unload and on shutdown instead of writing climate targets after the controller stopped and holding up Home Assistant's shutdown.
 
 ### Removed
 
 - Unused `already_configured` abort string (the flow routes a second setup to the add-room step instead).
+
+### Requirements
+
+- Home Assistant 2024.7 or later.
+
+## [0.1.1] — 2026-05-19
+
+Re-cut of 0.1.0 for the HACS default submission, so the release sits on a validated workflow run. The manifest still reported 0.1.0.
+
+### Added
+
+- Brand icons served from `custom_components/heating_schedule/brand/` (the HA 2026.3 mechanism).
+- CI workflow: hassfest, HACS and pytest validation.
+- Tests for the config-flow happy path and the setup/unload lifecycle.
+
+### Changed
+
+- `iot_class` corrected to `local_polling`.
+- README install step prefers HACS default, with the custom-repository route as fallback.
+
+### Fixed
+
+- Setback entity ID is no longer double-prefixed.
 
 ## [0.1.0] — 2026-05-19
 
@@ -42,4 +66,6 @@ First public release. HACS submission pending.
 - Home Assistant 2024.4 or later.
 - One `climate` entity per room that accepts `set_temperature`.
 
+[0.2.0]: https://github.com/genericJE/ha-heating-schedule/releases/tag/v0.2.0
+[0.1.1]: https://github.com/genericJE/ha-heating-schedule/releases/tag/v0.1.1
 [0.1.0]: https://github.com/genericJE/ha-heating-schedule/releases/tag/v0.1.0
