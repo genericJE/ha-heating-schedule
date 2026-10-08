@@ -3,9 +3,14 @@
 from __future__ import annotations
 
 from homeassistant.const import Platform
+from homeassistant.util.hass_dict import HassKey
 
 DOMAIN = "heating_schedule"
 PLATFORMS = [Platform.NUMBER, Platform.SWITCH, Platform.TEXT, Platform.TIME]
+
+# hass.data flag: the card's static path is registered once per HA run and
+# survives entry unload/reload (there's no unregister API).
+DATA_CARD_REGISTERED: HassKey[bool] = HassKey(f"{DOMAIN}_card_registered")
 
 # Stable entity_id of the integration-owned pause switch, used by the
 # schedule controller's _resolve_pause_switch fallback and by the dashboard

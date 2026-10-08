@@ -10,7 +10,15 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.device_registry import DeviceEntry
 
-from .const import CARD_FILENAME, CARD_URL, CONF_ROOMS, CONF_SLUG, DOMAIN, PLATFORMS
+from .const import (
+    CARD_FILENAME,
+    CARD_URL,
+    CONF_ROOMS,
+    CONF_SLUG,
+    DATA_CARD_REGISTERED,
+    DOMAIN,
+    PLATFORMS,
+)
 from .schedule import HeatingScheduleController
 
 type HeatingScheduleConfigEntry = ConfigEntry[HeatingScheduleController]
@@ -22,11 +30,11 @@ async def async_setup_entry(
     hass: HomeAssistant, entry: HeatingScheduleConfigEntry
 ) -> bool:
     """Set up Heating Schedule from a config entry."""
-    if not hass.data.get(f"{DOMAIN}_card_registered"):
+    if not hass.data.get(DATA_CARD_REGISTERED):
         await hass.http.async_register_static_paths(
             [StaticPathConfig(CARD_URL, CARD_PATH, cache_headers=False)]
         )
-        hass.data[f"{DOMAIN}_card_registered"] = True
+        hass.data[DATA_CARD_REGISTERED] = True
 
     controller = HeatingScheduleController(hass, entry)
     entry.runtime_data = controller
