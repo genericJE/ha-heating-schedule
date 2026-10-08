@@ -337,10 +337,12 @@ class HeatingScheduleController:
         climate_state = self.hass.states.get(room.climate_entity)
         if climate_state is None or is_unusable(climate_state.state):
             return
-        # Respect a user-disabled climate. set_temperature on an off
-        # entity is silently dropped on most platforms (BT included), so
-        # the write would succeed but heat would never come on — leave
-        # the schedule visibly inactive instead.
+        # Respect a user-disabled climate: treat hvac_mode=off as
+        # authoritative and leave the schedule visibly inactive rather than
+        # forcing heat back on. Platforms differ on whether set_temperature
+        # is honoured while off (older Better Thermostat silently dropped it;
+        # BT 1.8+ accepts and stores the setpoint) — either way we don't
+        # write here, so the room stays off until the user re-enables it.
         if climate_state.state == STATE_OFF:
             return
         # Skip while Better Thermostat's window-open frost-protect is
