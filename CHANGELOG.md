@@ -2,6 +2,24 @@
 
 All notable changes to this project are documented here. Versioning follows [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Changed
+
+- Minimum Home Assistant version is 2024.7. The card is served through the async static-path API that first shipped there; 0.1.0 claimed 2024.4, where the integration failed to import.
+- Test suite and CI run on Python 3.14 against a 2026.x core. The previous lock pinned Home Assistant 2025.4, so CI could not see current deprecations.
+- Config-flow summary notes that the pasted entity IDs assume Home Assistant's default entity ID format.
+- The card's "static path registered" flag in `hass.data` is a typed `HassKey`.
+
+### Fixed
+
+- The 25 non-English translations gained the add-room step and the `room_added` abort text, which had only existed in English.
+- The settle and pause-snapshot delays are entry background tasks. They are cancelled on unload and on shutdown instead of writing climate targets after the controller stopped and holding up Home Assistant's shutdown.
+
+### Removed
+
+- Unused `already_configured` abort string (the flow routes a second setup to the add-room step instead).
+
 ## [0.1.0] — 2026-05-19
 
 First public release. HACS submission pending.
