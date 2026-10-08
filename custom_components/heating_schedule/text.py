@@ -71,9 +71,7 @@ class HeatingWindowsText(HeatingScheduleRoomEntity, TextEntity, RestoreEntity):
     ) -> None:
         super().__init__(entry, slug, room_name)
         self._attr_unique_id = f"{entry.entry_id}_{slug}_windows"
-        self._attr_native_value = validated_windows_json(
-            initial_json, DEFAULT_WINDOWS_JSON
-        )
+        self._attr_native_value = validated_windows_json(initial_json, DEFAULT_WINDOWS_JSON)
         # Detach from the room device entirely so it doesn't clutter the
         # device's controls modal (where the time pickers + comfort are the
         # editing surface). The entity stays in the entity registry and the
@@ -92,9 +90,7 @@ class HeatingWindowsText(HeatingScheduleRoomEntity, TextEntity, RestoreEntity):
         await super().async_added_to_hass()
         last = await self.async_get_last_state()
         if last and not is_unusable(last.state):
-            self._attr_native_value = validated_windows_json(
-                last.state, DEFAULT_WINDOWS_JSON
-            )
+            self._attr_native_value = validated_windows_json(last.state, DEFAULT_WINDOWS_JSON)
 
     async def async_set_value(self, value: str) -> None:
         """Validate and store a new JSON window list."""

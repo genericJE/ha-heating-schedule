@@ -74,9 +74,7 @@ def _in_window(start: int, end: int, now: int) -> bool:
 class HeatingScheduleController:
     """Owns the schedule loop for one config entry."""
 
-    def __init__(
-        self, hass: HomeAssistant, entry: HeatingScheduleConfigEntry
-    ) -> None:
+    def __init__(self, hass: HomeAssistant, entry: HeatingScheduleConfigEntry) -> None:
         self.hass = hass
         self.entry = entry
         self._unsub_callbacks: list[CALLBACK_TYPE] = []
@@ -142,14 +140,10 @@ class HeatingScheduleController:
         self._setback_entity = self._resolve_setback_number()
 
         watched_per_room = [
-            entity
-            for room in self._rooms
-            for entity in (room.windows_entity, room.comfort_entity)
+            entity for room in self._rooms for entity in (room.windows_entity, room.comfort_entity)
         ]
         self._unsub_callbacks.append(
-            async_track_state_change_event(
-                self.hass, watched_per_room, self._on_room_entity_change
-            )
+            async_track_state_change_event(self.hass, watched_per_room, self._on_room_entity_change)
         )
 
         if self._pause_entity:
@@ -167,15 +161,11 @@ class HeatingScheduleController:
             )
 
         self._unsub_callbacks.append(
-            async_track_time_interval(
-                self.hass, self._on_tick, timedelta(minutes=1)
-            )
+            async_track_time_interval(self.hass, self._on_tick, timedelta(minutes=1))
         )
 
         self._unsub_callbacks.append(
-            self.hass.bus.async_listen_once(
-                EVENT_HOMEASSISTANT_STARTED, self._on_ha_started
-            )
+            self.hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STARTED, self._on_ha_started)
         )
 
         await self._pause_sync.async_start(self._pause_entity)
@@ -283,10 +273,7 @@ class HeatingScheduleController:
                 entry = registry.async_get(entity_id)
                 if entry is None:
                     continue
-                if (
-                    should_be_enabled
-                    and entry.disabled_by == er.RegistryEntryDisabler.INTEGRATION
-                ):
+                if should_be_enabled and entry.disabled_by == er.RegistryEntryDisabler.INTEGRATION:
                     registry.async_update_entity(entity_id, disabled_by=None)
                 elif not should_be_enabled and entry.disabled_by is None:
                     registry.async_update_entity(
@@ -332,9 +319,7 @@ class HeatingScheduleController:
     async def _evaluate_all(self) -> None:
         if self._is_paused():
             return
-        await asyncio.gather(
-            *(self._evaluate_room(room) for room in self._rooms)
-        )
+        await asyncio.gather(*(self._evaluate_room(room) for room in self._rooms))
 
     async def _apply_setback_all_after_snapshot(self) -> None:
         """Let a peer automation snapshot pre-pause state, then push setback."""
@@ -349,9 +334,7 @@ class HeatingScheduleController:
         stay quiet.
         """
         setback = self._read_setback()
-        await asyncio.gather(
-            *(self._write_climate(room, setback) for room in self._rooms)
-        )
+        await asyncio.gather(*(self._write_climate(room, setback) for room in self._rooms))
 
     async def _write_climate(self, room: _Room, desired: float) -> None:
         climate_state = self.hass.states.get(room.climate_entity)
@@ -377,11 +360,9 @@ class HeatingScheduleController:
         try:
             if abs(float(current) - desired) < 1e-6:
                 return
-        except (TypeError, ValueError):
+        except TypeError, ValueError:
             return
-        _LOGGER.debug(
-            "heating_schedule: %s -> %.1f", room.climate_entity, desired
-        )
+        _LOGGER.debug("heating_schedule: %s -> %.1f", room.climate_entity, desired)
         await self.hass.services.async_call(
             "climate",
             "set_temperature",
@@ -424,7 +405,7 @@ class HeatingScheduleController:
             if state is not None and not is_unusable(state.state):
                 try:
                     return float(state.state)
-                except (TypeError, ValueError):
+                except TypeError, ValueError:
                     pass
         return float(self.entry.data.get(CONF_SETBACK, DEFAULT_SETBACK))
 
@@ -434,7 +415,7 @@ class HeatingScheduleController:
             return fallback
         try:
             return float(state.state)
-        except (TypeError, ValueError):
+        except TypeError, ValueError:
             return fallback
 
     def _read_windows(self, entity_id: str) -> list[tuple[int, int]]:
@@ -471,9 +452,7 @@ class _PauseSync:
             return
         self._switch_entity = switch_entity
         self._unsubs.append(
-            async_track_state_change_event(
-                self.hass, [switch_entity], self._on_switch_change
-            )
+            async_track_state_change_event(self.hass, [switch_entity], self._on_switch_change)
         )
         self._unsubs.append(
             async_track_state_change_event(

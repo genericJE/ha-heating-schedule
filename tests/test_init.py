@@ -142,9 +142,7 @@ async def test_setback_applied_outside_window(
     await hass.async_block_till_done()
 
 
-async def test_skip_when_climate_off(
-    hass: HomeAssistant, climate_calls: list[ServiceCall]
-) -> None:
+async def test_skip_when_climate_off(hass: HomeAssistant, climate_calls: list[ServiceCall]) -> None:
     """A climate in hvac_mode=off must not be written to."""
     hass.states.async_set("climate.bedroom", STATE_OFF, {"temperature": 5.0})
 

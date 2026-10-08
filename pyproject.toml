@@ -45,6 +45,10 @@ ignore = [
     "BLE001",
 ]
 
+[tool.ruff.lint.per-file-ignores]
+# pytest asserts are the test idiom; S101 only makes sense for shipped code.
+"tests/*" = ["S101"]
+
 [tool.pyright]
 typeCheckingMode = "basic"
 pythonVersion = "3.14"

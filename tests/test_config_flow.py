@@ -26,9 +26,7 @@ async def test_user_flow_creates_entry(hass: HomeAssistant) -> None:
     assert result["type"] == FlowResultType.FORM
     assert result["step_id"] == "user"
 
-    result = await hass.config_entries.flow.async_configure(
-        result["flow_id"], {"room_count": 1}
-    )
+    result = await hass.config_entries.flow.async_configure(result["flow_id"], {"room_count": 1})
     assert result["type"] == FlowResultType.FORM
     assert result["step_id"] == "room"
 

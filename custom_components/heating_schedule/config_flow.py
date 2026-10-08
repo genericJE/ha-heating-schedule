@@ -72,9 +72,7 @@ def _room_schema(suggested_name: str) -> vol.Schema:
             vol.Optional(CONF_WINDOW_ENTITY): selector.EntitySelector(
                 selector.EntitySelectorConfig(domain="binary_sensor")
             ),
-            vol.Required(
-                CONF_COMFORT_DEFAULT, default=DEFAULT_COMFORT
-            ): selector.NumberSelector(
+            vol.Required(CONF_COMFORT_DEFAULT, default=DEFAULT_COMFORT): selector.NumberSelector(
                 selector.NumberSelectorConfig(
                     min=DEFAULT_COMFORT_MIN,
                     max=DEFAULT_COMFORT_MAX,
@@ -83,9 +81,7 @@ def _room_schema(suggested_name: str) -> vol.Schema:
                     mode=selector.NumberSelectorMode.BOX,
                 )
             ),
-            vol.Required(
-                CONF_WINDOW_COUNT, default=1
-            ): selector.NumberSelector(
+            vol.Required(CONF_WINDOW_COUNT, default=1): selector.NumberSelector(
                 selector.NumberSelectorConfig(
                     min=1,
                     max=MAX_WINDOWS,
@@ -130,9 +126,7 @@ class HeatingScheduleConfigFlow(ConfigFlow, domain=DOMAIN):
 
     # ── step 1: how many rooms ────────────────────────────────────────────
 
-    async def async_step_user(
-        self, user_input: dict[str, Any] | None = None
-    ) -> ConfigFlowResult:
+    async def async_step_user(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         # "Add entry" on an integration that already has an entry should add
         # one room to that entry, not start a parallel multi-room setup.
         if self._async_current_entries():
@@ -159,9 +153,7 @@ class HeatingScheduleConfigFlow(ConfigFlow, domain=DOMAIN):
 
     # ── step 2: per-room identity + entities ──────────────────────────────
 
-    async def async_step_room(
-        self, user_input: dict[str, Any] | None = None
-    ) -> ConfigFlowResult:
+    async def async_step_room(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         errors: dict[str, str] = {}
         suggested_name, suggested_base = _SUGGESTED_ROOMS[
             self._current_room_index % len(_SUGGESTED_ROOMS)
@@ -172,12 +164,8 @@ class HeatingScheduleConfigFlow(ConfigFlow, domain=DOMAIN):
             if not name:
                 errors[CONF_NAME] = "name_required"
             else:
-                slug = _unique_slug(
-                    name, [r[CONF_SLUG] for r in self._draft[CONF_ROOMS]]
-                )
-                self._draft[CONF_ROOMS].append(
-                    _room_payload(user_input, slug, suggested_base)
-                )
+                slug = _unique_slug(name, [r[CONF_SLUG] for r in self._draft[CONF_ROOMS]])
+                self._draft[CONF_ROOMS].append(_room_payload(user_input, slug, suggested_base))
                 self._current_room_index += 1
                 if self._current_room_index >= self._room_count:
                     return await self.async_step_globals()
@@ -199,16 +187,12 @@ class HeatingScheduleConfigFlow(ConfigFlow, domain=DOMAIN):
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
         if user_input is not None:
-            self._draft[CONF_SETBACK] = float(
-                user_input.get(CONF_SETBACK, DEFAULT_SETBACK)
-            )
+            self._draft[CONF_SETBACK] = float(user_input.get(CONF_SETBACK, DEFAULT_SETBACK))
             return await self.async_step_summary()
 
         schema = vol.Schema(
             {
-                vol.Required(
-                    CONF_SETBACK, default=DEFAULT_SETBACK
-                ): selector.NumberSelector(
+                vol.Required(CONF_SETBACK, default=DEFAULT_SETBACK): selector.NumberSelector(
                     selector.NumberSelectorConfig(
                         min=DEFAULT_COMFORT_MIN,
                         max=DEFAULT_COMFORT_MAX,
@@ -326,9 +310,7 @@ def _dashboard_snippet(rooms: list[Mapping[str, Any]]) -> str:
         lines.append(f"    comfort_entity: number.{slug}_comfort")
         lines.append(f"    climate_entity: {room[CONF_CLIMATE_ENTITY]}")
         if room.get(CONF_CURRENT_TEMP_ENTITY):
-            lines.append(
-                f"    current_temp_entity: {room[CONF_CURRENT_TEMP_ENTITY]}"
-            )
+            lines.append(f"    current_temp_entity: {room[CONF_CURRENT_TEMP_ENTITY]}")
         if room.get(CONF_WINDOW_ENTITY):
             lines.append(f"    window_entity: {room[CONF_WINDOW_ENTITY]}")
         lines.append("    grid_options:")

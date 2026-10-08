@@ -21,9 +21,7 @@ DEFAULT_WINDOW: list[str] = ["07:00", "22:00"]
 # States that mean "no usable value". Centralised so every reader matches
 # what HA actually emits (STATE_NONE is "none"; empty string is the rare
 # pre-restore window).
-UNUSABLE_STATES: frozenset[str] = frozenset(
-    {STATE_UNAVAILABLE, STATE_UNKNOWN, "none", ""}
-)
+UNUSABLE_STATES: frozenset[str] = frozenset({STATE_UNAVAILABLE, STATE_UNKNOWN, "none", ""})
 
 
 def is_unusable(state: str | None) -> bool:
@@ -61,17 +59,14 @@ def parse_windows(raw: str | None) -> list[list[str]]:
         return []
     try:
         parsed = json.loads(raw)
-    except (TypeError, ValueError):
+    except TypeError, ValueError:
         return []
     if not isinstance(parsed, list):
         return []
     return [
         [item[0], item[1]]
         for item in parsed
-        if isinstance(item, list)
-        and len(item) == 2
-        and is_hhmm(item[0])
-        and is_hhmm(item[1])
+        if isinstance(item, list) and len(item) == 2 and is_hhmm(item[0]) and is_hhmm(item[1])
     ]
 
 

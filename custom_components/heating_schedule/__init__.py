@@ -31,9 +31,7 @@ type HeatingScheduleConfigEntry = ConfigEntry[HeatingScheduleController]
 CARD_PATH = str(Path(__file__).parent / "www" / CARD_FILENAME)
 
 
-async def async_setup_entry(
-    hass: HomeAssistant, entry: HeatingScheduleConfigEntry
-) -> bool:
+async def async_setup_entry(hass: HomeAssistant, entry: HeatingScheduleConfigEntry) -> bool:
     """Set up Heating Schedule from a config entry."""
     if not hass.data.get(DATA_CARD_REGISTERED):
         await hass.http.async_register_static_paths(
@@ -54,18 +52,14 @@ async def async_setup_entry(
     return True
 
 
-async def async_unload_entry(
-    hass: HomeAssistant, entry: HeatingScheduleConfigEntry
-) -> bool:
+async def async_unload_entry(hass: HomeAssistant, entry: HeatingScheduleConfigEntry) -> bool:
     """Unload a config entry."""
     controller = entry.runtime_data
     await controller.async_stop()
     return await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
 
 
-async def _async_update_listener(
-    hass: HomeAssistant, entry: HeatingScheduleConfigEntry
-) -> None:
+async def _async_update_listener(hass: HomeAssistant, entry: HeatingScheduleConfigEntry) -> None:
     """Reload the entry when the user edits options."""
     await hass.config_entries.async_reload(entry.entry_id)
 
@@ -102,9 +96,7 @@ async def async_remove_config_entry_device(
     hass.config_entries.async_update_entry(entry, data=new_data)
 
     registry = er.async_get(hass)
-    text_eid = registry.async_get_entity_id(
-        "text", DOMAIN, f"{entry.entry_id}_{slug}_windows"
-    )
+    text_eid = registry.async_get_entity_id("text", DOMAIN, f"{entry.entry_id}_{slug}_windows")
     if text_eid:
         registry.async_remove(text_eid)
 
