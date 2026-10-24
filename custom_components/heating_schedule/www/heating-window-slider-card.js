@@ -5,7 +5,9 @@
  *
  * Each card shows one or more (1..4) heating windows on a shared 24h track,
  * a target-temperature spinner for that room's comfort temp, an active /
- * inactive badge for whether the current time falls inside any window,
+ * inactive badge for whether the current time falls inside any window
+ * (or "off" while the climate's hvac_mode is off), a radiator button that
+ * toggles the climate between heat and off,
  * the current room temperature, and a window open/closed indicator.
  *
  * Storage: a single input_text per room holding a JSON list of
@@ -69,7 +71,19 @@ const css = `
     background: rgba(33,150,243,0.22);
     color: var(--state-climate-cool-color, #2196f3);
     opacity: 1;
-    transition: background 0.15s, color 0.15s;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s, opacity 0.15s;
+  }
+  .climate-icon:disabled {
+    cursor: default;
+  }
+  .climate-icon.off {
+    /* hvac_mode off: grey, dimmed radiator. */
+    background: var(--disabled-color, rgba(127,127,127,0.15));
+    color: var(--disabled-text-color, #9e9e9e);
+    opacity: 0.6;
   }
   .climate-icon.heating {
     /* Heating: yellow/active radiator. */
@@ -113,7 +127,8 @@ const css = `
     background: var(--state-active-color, #ff9800);
     color: var(--text-primary-color, #fff);
   }
-  .badge.paused {
+  .badge.paused,
+  .badge.off {
     background: var(--disabled-text-color, #9e9e9e);
     color: var(--text-primary-color, #fff);
     cursor: help;
@@ -310,6 +325,7 @@ class HeatingWindowSliderCard extends HTMLElement {
     this._resizeObs = null;
     this._optimisticComfort = null;
     this._optimisticWindows = null;     // [{start, end}] override during/just after drag
+    this._optimisticHvac = null;        // 'heat' / 'off' override while set_hvac_mode is in flight
     this._dragging = null;              // {windowIdx, handle}
     this._dragValue = null;             // current dragged minute value
   }
@@ -357,7 +373,9 @@ class HeatingWindowSliderCard extends HTMLElement {
     const card = document.createElement('ha-card');
     card.innerHTML = `
       <div class="header">
-        <ha-icon class="climate-icon" icon="mdi:radiator"></ha-icon>
+        <button class="climate-icon" type="button" aria-label="Toggle heating" title="Toggle heating">
+          <ha-icon icon="mdi:radiator"></ha-icon>
+        </button>
         <div class="name-block">
           <div class="name"></div>
           <div class="subtitle"></div>
@@ -388,7 +406,8 @@ class HeatingWindowSliderCard extends HTMLElement {
 
     this._els = {
       card,
-      climateIcon: card.querySelector('.climate-icon'),
+      climateBtn: card.querySelector('.climate-icon'),
+      climateIcon: card.querySelector('.climate-icon ha-icon'),
       name: card.querySelector('.name'),
       subtitle: card.querySelector('.subtitle'),
       badge: card.querySelector('.badge'),
@@ -405,6 +424,7 @@ class HeatingWindowSliderCard extends HTMLElement {
 
     this._els.btnInc.addEventListener('click', () => this._adjustComfort(+1));
     this._els.btnDec.addEventListener('click', () => this._adjustComfort(-1));
+    this._els.climateBtn.addEventListener('click', () => this._toggleHvac());
 
     if (this.isConnected && 'ResizeObserver' in window && !this._resizeObs) {
       this._resizeObs = new ResizeObserver(() => this._safeUpdate());
@@ -605,6 +625,21 @@ class HeatingWindowSliderCard extends HTMLElement {
     return candidates.some((eid) => this._hass.states[eid]?.state === 'on');
   }
 
+  // Flip the climate between heat and off. The integration never writes
+  // hvac_mode itself (it respects off as the user's decision), so this is
+  // the only place a room gets switched back on from the card.
+  _toggleHvac() {
+    const eid = this._config.climate_entity;
+    const climate = eid && this._hass ? this._hass.states[eid] : null;
+    if (!climate || ['unavailable','unknown'].includes(climate.state)) return;
+    const next = climate.state === 'off' ? 'heat' : 'off';
+    this._optimisticHvac = next;
+    this._safeUpdate();
+    this._hass.callService('climate', 'set_hvac_mode', { entity_id: eid, hvac_mode: next })
+      .then(() => { this._optimisticHvac = null; })
+      .catch(() => { this._optimisticHvac = null; this._safeUpdate(); });
+  }
+
   _update() {
     if (!this._rendered || !this._hass || !this._config) return;
     const windows = this._readWindows();
@@ -624,22 +659,31 @@ class HeatingWindowSliderCard extends HTMLElement {
     this._els.subtitle.textContent = subtitleParts.join(' · ');
     this._els.subtitle.style.display = subtitleParts.length ? '' : 'none';
 
-    const heating = climate?.attributes?.hvac_action === 'heating';
-    this._els.climateIcon.icon = heating ? 'mdi:radiator' : 'mdi:radiator-disabled';
-    this._els.climateIcon.classList.toggle('heating', !!heating);
+    const hvacMode = this._optimisticHvac ?? climate?.state;
+    const hvacOff = hvacMode === 'off';
+    const heating = !hvacOff && climate?.attributes?.hvac_action === 'heating';
+    this._els.climateIcon.icon = hvacOff ? 'mdi:radiator-off' : heating ? 'mdi:radiator' : 'mdi:radiator-disabled';
+    this._els.climateBtn.classList.toggle('heating', !!heating);
+    this._els.climateBtn.classList.toggle('off', hvacOff);
+    this._els.climateBtn.disabled = !climate || ['unavailable','unknown'].includes(climate.state);
+    this._els.climateBtn.title = hvacOff ? 'Heating off, click to turn on' : 'Click to turn heating off';
+    this._els.climateBtn.setAttribute('aria-label', this._els.climateBtn.title);
 
     const paused = this._isPaused();
     this._els.wrap.classList.toggle('paused', paused);
+    this._els.badge.classList.remove('active', 'paused', 'off');
     if (paused) {
       this._els.badge.textContent = 'disabled';
       this._els.badge.title = 'heating is paused';
-      this._els.badge.classList.remove('active');
       this._els.badge.classList.add('paused');
+    } else if (hvacOff) {
+      this._els.badge.textContent = 'off';
+      this._els.badge.title = 'climate hvac_mode is off; the schedule does not override it';
+      this._els.badge.classList.add('off');
     } else {
       this._els.badge.textContent = anyActive ? 'active' : 'inactive';
       this._els.badge.title = '';
       this._els.badge.classList.toggle('active', anyActive);
-      this._els.badge.classList.remove('paused');
     }
 
     const winState = this._config.window_entity ? this._hass.states[this._config.window_entity] : null;

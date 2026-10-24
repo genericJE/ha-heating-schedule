@@ -2,6 +2,14 @@
 
 All notable changes to this project are documented here. Versioning follows [Semantic Versioning](https://semver.org/).
 
+## [0.2.1] - 2026-10-24
+
+The card gains a heat/off toggle. Scheduling behaviour is unchanged.
+
+### Added
+
+- The card's radiator icon is a button that toggles the room's climate between `heat` and `off` via `climate.set_hvac_mode`. While the climate is off the badge reads "off" instead of "active", since the schedule never overrides a climate that is off and a comfort target alone cannot start heating.
+
 ## [0.2.0] - 2026-10-08
 
 ### Changed
@@ -66,6 +74,7 @@ First public release. HACS submission pending.
 - Home Assistant 2024.4 or later.
 - One `climate` entity per room that accepts `set_temperature`.
 
+[0.2.1]: https://github.com/genericJE/ha-heating-schedule/releases/tag/v0.2.1
 [0.2.0]: https://github.com/genericJE/ha-heating-schedule/releases/tag/v0.2.0
 [0.1.1]: https://github.com/genericJE/ha-heating-schedule/releases/tag/v0.1.1
 [0.1.0]: https://github.com/genericJE/ha-heating-schedule/releases/tag/v0.1.0
