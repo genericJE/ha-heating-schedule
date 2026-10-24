@@ -2,7 +2,9 @@
 
 All notable changes to this project are documented here. Versioning follows [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [0.2.1] - 2026-10-24
+
+The card gains a heat/off toggle. Scheduling behaviour is unchanged.
 
 ### Added
 
@@ -72,6 +74,7 @@ First public release. HACS submission pending.
 - Home Assistant 2024.4 or later.
 - One `climate` entity per room that accepts `set_temperature`.
 
+[0.2.1]: https://github.com/genericJE/ha-heating-schedule/releases/tag/v0.2.1
 [0.2.0]: https://github.com/genericJE/ha-heating-schedule/releases/tag/v0.2.0
 [0.1.1]: https://github.com/genericJE/ha-heating-schedule/releases/tag/v0.1.1
 [0.1.0]: https://github.com/genericJE/ha-heating-schedule/releases/tag/v0.1.0
